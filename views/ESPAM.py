@@ -241,6 +241,8 @@ def make_ESPAM_layout():
     ])
 
     GIS_Options = dcc.Store(id='GIS-options', data={})
+    Color_Values = dcc.Store(id='color-values', data={'data': [-25, -2, 2, 25]})
+    Colors = dcc.Store(id='colors', data={'data':['red', 'white', 'white', 'green']})
 
     # Make content with a graph, a slider, a dropdown, and a file selector
     content = html.Div([
@@ -261,6 +263,8 @@ def make_ESPAM_layout():
                     modal,
                     GIS_Options,
                     GIS_Files,
+                    Color_Values,
+                    Colors,
                 ], className="my-div"),
             ], width=3, xl=2),
             dbc.Col([
@@ -276,19 +280,19 @@ def make_ESPAM_layout():
                         ], width=9),
                         dbc.Col([
                             dbc.Row([
-                                dcc.Input(id='color-1-position', type='number', value=-25, className="color-position"),
+                                dcc.Input(id='color-1-position', type='number', value=-25, className="color-position", debounce=True),
                                 dbc.Input(id='color-1', type='color', value='#ff0000', className="color-picker", style={'width': '50px', 'height': '50px'})
                             ], id="color-row-1"),
                             dbc.Row([
-                                dcc.Input(id='color-2-position', type='number', value=-2, className="color-position"),
+                                dcc.Input(id='color-2-position', type='number', value=-2, className="color-position", debounce=True),
                                 dbc.Input(id='color-2', type='color', value='#000000', className="color-picker", style={'width': '50px', 'height': '50px'})
                             ], id="color-row-2"),
                             dbc.Row([
-                                dcc.Input(id='color-3-position', type='number', value=2, className="color-position"),
+                                dcc.Input(id='color-3-position', type='number', value=2, className="color-position", debounce=True),
                                 dbc.Input(id='color-3', type='color', value='#000000', className="color-picker", style={'width': '50px', 'height': '50px'})
                             ], id="color-row-3"),
                             dbc.Row([
-                                dcc.Input(id='color-4-position', type='number', value=25, className="color-position"),
+                                dcc.Input(id='color-4-position', type='number', value=25, className="color-position", debounce=True),
                                 dbc.Input(id='color-4', type='color', value='#00FF00', className="color-picker", style={'width': '50px', 'height': '50px'})
                             ], id="color-row-4"),
                         ], width=2),
@@ -316,34 +320,21 @@ def get_ESPAM_callbacks(app):
             Output('WL_Store', 'data'),
             Input('ESPAM_slider', 'value'),
             State('WLs_Store', 'data'),
-            State('GIS-options', 'data'),
-            State('figure-height', 'value'),
-            State('figure-width', 'value'),
+            Input('GIS-options', 'data'),
+            Input('figure-height', 'value'),
+            Input('figure-width', 'value'),
+            Input('color-values', 'data'),
+            Input('colors', 'data'),
         )
-        def update_graph(slider_value, WLs, GIS_Options, height, width):
+        def update_graph(slider_value, WLs, GIS_Options, height, width, color_values, colors):
             # Make a simple plot
             WLs = pd.DataFrame.from_dict(WLs)
             WL = WLs.iloc[:, slider_value]
             WL = WL.values.reshape(198, 233)
-            WL[WL<1] = 0
-
-            # WL = interpolate.grid
 
 
-            return mapPlot(WL, GIS_Options, height, width), pd.DataFrame(WL).to_dict('records')
+            return mapPlot(WL, GIS_Options, height, width, color_values['data'], colors['data']), pd.DataFrame(WL).to_dict('records')
         
-
-        @app.callback(
-            Output('ESPAM_graph', 'figure'),
-            Input('GIS-options', 'data'),
-            Input('figure-height', 'value'),
-            Input('figure-width', 'value'),
-            State('WL_Store', 'data'),
-        )
-        def update_shps(GIS_Options, height, width, WL):
-            WL = pd.DataFrame.from_dict(WL)
-            return mapPlot(WL, GIS_Options, height, width)
-            
         @app.callback(
             Output('ESPAM_modal', 'is_open'),
             Input('ESPAM_modal_open', 'n_clicks'),
@@ -405,20 +396,46 @@ def get_ESPAM_callbacks(app):
             Output('color-row-2', 'style'),
             Output('color-row-3', 'style'),
             Output('color-row-4', 'style'),
+            Output('color-1-position', 'min'),
+            Output('color-2-position', 'min'),
+            Output('color-3-position', 'min'),
+            Output('color-4-position', 'min'),
+            Output('color-1-position', 'max'),
+            Output('color-2-position', 'max'),
+            Output('color-3-position', 'max'),
+            Output('color-4-position', 'max'),
+            Output('color-values', 'data'),
+            Output('colors', 'data'),
             Input('color-1-position', 'value'),
             Input('color-2-position', 'value'),
             Input('color-3-position', 'value'),
             Input('color-4-position', 'value'),
+            Input('color-1', 'color'),
+            Input('color-2', 'color'),
+            Input('color-3', 'color'),
+            Input('color-4', 'color'),
         )
-        def update_color_rows(color_1_position, color_2_position, color_3_position, color_4_position):
-            positions = [color_1_position, color_2_position, color_3_position, color_4_position]
-            pos1 = int(color_1_position/(max(positions)-min(positions))*100)
-            pos2 = int(color_2_position/(max(positions)-min(positions))*100)
-            pos3 = int(color_3_position/(max(positions)-min(positions))*100)
-            pos4 = int(color_4_position/(max(positions)-min(positions))*100)      
-            
-            return [{'top':f'{pos1}%', 'position':'absolute'},
-                    {'top':f'{pos2}%', 'position':'absolute'},
-                    {'top':f'{pos3}%', 'position':'absolute'},
-                    {'top':f'{pos4}%', 'position':'absolute'}]
+        def update_color_rows(color_1_position, color_2_position, color_3_position, color_4_position,
+                              color_1, color_2, color_3, color_4):
+            positions = np.array([color_1_position, color_2_position, color_3_position, color_4_position])
+            positions = (positions - np.min(positions)) / (np.max(positions) - np.min(positions))
+
+            Top = 70
+            Height = 665
+
+            positions = Top + positions * Height
+            for i in range(3):
+                if (positions[i]-positions[i+1])<75:
+                    positions[i] = positions[i-1] + 75
+
+            return [{'top':f'{Top+positions[3]*Height}px', 'position':'absolute'},
+                    {'top':f'{Top+positions[2]*Height}px', 'position':'absolute'},
+                    {'top':f'{Top+positions[1]*Height}px', 'position':'absolute'},
+                    {'top':f'{Top+positions[0]*Height}px', 'position':'absolute'},
+                    -np.inf, color_1_position, color_2_position, color_3_position,
+                    color_1_position, color_2_position, color_3_position, np.inf,
+                    {'data':[color_1_position, color_2_position, color_3_position, color_4_position]},
+                    {'data':[color_1, color_2, color_3, color_4]},
+                    ]
+
         

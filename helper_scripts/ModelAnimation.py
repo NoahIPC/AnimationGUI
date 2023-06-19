@@ -73,6 +73,10 @@ def ModelAnimation(ConfigFile):
 
     WLTest = np.dstack(WLTest)
 
+    StartDate = SectionRead(config, 'Animation', 'StartDate', False)
+    Dates = pd.date_range(start=StartDate, periods=WLTest.shape[2], freq='D')
+
+
 
     Width = SectionRead(config, 'Animation', 'Width', False)
     Height = SectionRead(config, 'Animation', 'Height', False)
@@ -157,7 +161,7 @@ def ModelAnimation(ConfigFile):
             global contf
             global dateText
             global Sent
-            date = DataValues.index[i]
+            date = Dates[i]
 
             #Filter model data for cleaner visualization
             Ti = WLTest[:,:,i]
