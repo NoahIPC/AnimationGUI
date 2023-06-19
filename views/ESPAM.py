@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash_extensions.enrich import dcc, html, MultiplexerTransform, DashProxy
+import dash_daq as daq
 
 import numpy as np
 import pandas as pd
@@ -76,10 +77,10 @@ def UpdateDataPlot(DataValues, PltLines, PltTypes, PltData, PltAxes, Date):
 
             i += 1
 
-def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None):
+def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None, 
+            colors=['red', 'white', 'white', 'green'], values=[-25, -2, 2, 25]):
 
     # Get zoom level of old figure
-    
 
     if not GIS_Options:
         GIS_Options = {}
@@ -158,22 +159,9 @@ def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None):
     fig.update_yaxes(showgrid=False)
     fig.update_layout(plot_bgcolor='white')
 
-    # Add a border to the figure
-    fig.update_layout(
-        xaxis=dict(
-            linecolor='black',
-            linewidth=2,
-            mirror=True
-        ),
-        yaxis=dict(
-            linecolor='black',
-            linewidth=2,
-            mirror=True
-        )
-    )
+    colors = [y for y, x in sorted(zip(colors, values))]
+    values = sorted(values)
 
-    colors = ['red', 'white', 'white', 'green']
-    values = [-25, -2, 2, 25]
     # normalize the colorscale 0 to 1
     colorscale = [[(values[i]-values[0])/(values[-1]-values[0]), colors[i]] for i in range(len(values))]
 
@@ -262,6 +250,12 @@ def make_ESPAM_layout():
                     html.Label('Select a Model Timestep'),
                     dcc.Slider(id='ESPAM_slider', min=0, max=100, step=1, value=75, marks={i: f'{i}' for i in range(0, 101, 25)}, 
                             className="my-slider"),
+                    html.Label('Start Date'),
+                    dcc.Input(id='start_date', type='text', value='YYYY-MM-DD', className="my-input", pattern=r'\d{4}-\d{2}-\d{2}'),
+                    html.Label('Model Timestep Frequency (Days)'),
+                    dcc.Input(id='date_freq', type='number', value=1, className="my-input"),
+                    html.Label('Animation Length (Seconds)', id='animation-length-label', className="my-label"),
+                    dcc.Input(id='animation-length', type='number', value=60, className="my-input"),
                     html.Button('Edit Base GIS Layers', id='ESPAM_modal_open', className="my-button"),
                     dcc.Upload(id='ESPAM_upload', children=html.Div(['Drag and Drop or ', html.A('Select Files')])),
                     modal,
@@ -276,10 +270,28 @@ def make_ESPAM_layout():
                             html.Label('Figure Height', className="height-slider-label"),
                             dcc.Slider(id='figure-height', min=0, max=720, step=50, value=720, marks={i: f'{i}' for i in range(0, 721, 200)}.update({720: '720'}),
                                     className="height-slider", vertical=True, verticalHeight=720),
-                        ]),
+                        ], width=1),
                         dbc.Col([
                                 dcc.Graph(id='ESPAM_graph', figure=mapPlot(), className='ESPAM-graph'),
-                        ]),
+                        ], width=9),
+                        dbc.Col([
+                            dbc.Row([
+                                dcc.Input(id='color-1-position', type='number', value=-25, className="color-position"),
+                                dbc.Input(id='color-1', type='color', value='#ff0000', className="color-picker", style={'width': '50px', 'height': '50px'})
+                            ], id="color-row-1"),
+                            dbc.Row([
+                                dcc.Input(id='color-2-position', type='number', value=-2, className="color-position"),
+                                dbc.Input(id='color-2', type='color', value='#000000', className="color-picker", style={'width': '50px', 'height': '50px'})
+                            ], id="color-row-2"),
+                            dbc.Row([
+                                dcc.Input(id='color-3-position', type='number', value=2, className="color-position"),
+                                dbc.Input(id='color-3', type='color', value='#000000', className="color-picker", style={'width': '50px', 'height': '50px'})
+                            ], id="color-row-3"),
+                            dbc.Row([
+                                dcc.Input(id='color-4-position', type='number', value=25, className="color-position"),
+                                dbc.Input(id='color-4', type='color', value='#00FF00', className="color-picker", style={'width': '50px', 'height': '50px'})
+                            ], id="color-row-4"),
+                        ], width=2),
                     ]),
                     dbc.Row([
                         html.Label('Figure Width', className="width-slider-label"),
@@ -369,14 +381,44 @@ def get_ESPAM_callbacks(app):
                 }
             return options
 
-        # @app.callback(
-        #     Output('ESPAM_slider', 'max'),
-        #     Output('ESPAM_slider', 'marks'),
-        #     Output('ESPAM_slider', 'value'),
-        #     Input('WLs_Store', 'data'),
-        # )
-        # def update_slider(WLs):
-        #     WLs = pd.DataFrame.from_dict(WLs)
-        #     max = WLs.shape[1]
-        #     marks = {i: f'{i}' for i in range(0, max, 25)}
-        #     return max, marks, max
+        @app.callback(
+            Output('ESPAM_slider', 'max'),
+            Output('ESPAM_slider', 'marks'),
+            Output('ESPAM_slider', 'value'),
+            Input('WLs_Store', 'data'),
+            Input('start_date', 'value'),
+            Input('date_freq', 'value'),
+        )
+        def update_slider(WLs, start_date, date_freq):
+            WLs = pd.DataFrame.from_dict(WLs)
+            max = WLs.shape[1]
+            try:
+                start_date = pd.to_datetime(start_date)
+            except:
+                return no_update, no_update, no_update
+            marks = {i: (start_date + pd.Timedelta(days=i*date_freq)).year for i in range(0, max, 25)}
+            marks.update({max: (start_date + pd.Timedelta(days=max*date_freq)).year})
+            return max, marks, max
+
+        @app.callback(
+            Output('color-row-1', 'style'),
+            Output('color-row-2', 'style'),
+            Output('color-row-3', 'style'),
+            Output('color-row-4', 'style'),
+            Input('color-1-position', 'value'),
+            Input('color-2-position', 'value'),
+            Input('color-3-position', 'value'),
+            Input('color-4-position', 'value'),
+        )
+        def update_color_rows(color_1_position, color_2_position, color_3_position, color_4_position):
+            positions = [color_1_position, color_2_position, color_3_position, color_4_position]
+            pos1 = int(color_1_position/(max(positions)-min(positions))*100)
+            pos2 = int(color_2_position/(max(positions)-min(positions))*100)
+            pos3 = int(color_3_position/(max(positions)-min(positions))*100)
+            pos4 = int(color_4_position/(max(positions)-min(positions))*100)      
+            
+            return [{'top':f'{pos1}%', 'position':'absolute'},
+                    {'top':f'{pos2}%', 'position':'absolute'},
+                    {'top':f'{pos3}%', 'position':'absolute'},
+                    {'top':f'{pos4}%', 'position':'absolute'}]
+        

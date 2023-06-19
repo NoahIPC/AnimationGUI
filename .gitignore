@@ -33,3 +33,5 @@ geckodriver.log
 Archive/*
 
 venv/*
+
+ffmpeg-2021-07-06-git-758e2da289-full_build/*
