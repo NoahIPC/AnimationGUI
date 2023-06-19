@@ -81,7 +81,7 @@ for i, j in zip(Active[Active['ACTIVE'] == 1]['ROW_ID']-1, Active[Active['ACTIVE
 
 BoundaryRot = rotate(Boundary, alpha)
 
-BoundaryRot[BoundaryRot < 1e-5] = 0
+BoundaryRot[BoundaryRot < 0.5] = 0
 BoundaryRot = BoundaryRot.astype(bool)
 BoundaryRot = np.flip(BoundaryRot, axis=0)
 
@@ -154,7 +154,7 @@ app = DashProxy(transforms=[MultiplexerTransform()],
 app.layout = html.Div(
     [
         html.H1("ESPAM"),
-        tabs,
+        ESPAM_content,
         WLs_Store,
         WL_Store,
         SHP_Store

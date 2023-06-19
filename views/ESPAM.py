@@ -262,21 +262,32 @@ def make_ESPAM_layout():
                     html.Label('Select a Model Timestep'),
                     dcc.Slider(id='ESPAM_slider', min=0, max=100, step=1, value=75, marks={i: f'{i}' for i in range(0, 101, 25)}, 
                             className="my-slider"),
-                    # Set figure size
-                    dbc.Row([html.Label('Figure Height'),
-                            dcc.Input(id='figure-height', type='number', value=930, min=0, max=10000, step=50, debounce=True),
-                            html.Label('Figure Width'),
-                            dcc.Input(id='figure-width', type='number', value=1870, min=0, max=10000, step=50, debounce=True)]),
                     html.Button('Edit Base GIS Layers', id='ESPAM_modal_open', className="my-button"),
                     dcc.Upload(id='ESPAM_upload', children=html.Div(['Drag and Drop or ', html.A('Select Files')])),
                     modal,
                     GIS_Options,
                     GIS_Files,
                 ], className="my-div"),
-            ], width=3, xl=2, style={"border": "2px solid black"}),
+            ], width=3, xl=2),
             dbc.Col([
-                dcc.Graph(id='ESPAM_graph', figure=mapPlot()),
-            ], width=9, xl=10, style={"border": "2px solid black"}),
+                dbc.Row([
+                    dbc.Row([
+                        dbc.Col([
+                            html.Label('Figure Height', className="height-slider-label"),
+                            dcc.Slider(id='figure-height', min=0, max=720, step=50, value=720, marks={i: f'{i}' for i in range(0, 721, 200)}.update({720: '720'}),
+                                    className="height-slider", vertical=True, verticalHeight=720),
+                        ]),
+                        dbc.Col([
+                                dcc.Graph(id='ESPAM_graph', figure=mapPlot(), className='ESPAM-graph'),
+                        ]),
+                    ]),
+                    dbc.Row([
+                        html.Label('Figure Width', className="width-slider-label"),
+                        dcc.Slider(id='figure-width', min=0, max=1280, step=50, value=1280, marks={i: f'{i}' for i in range(0, 1281, 200)}.update({1280: '1280'}),
+                            className="width-slider"),
+                    ]),
+                ])
+            ], width=9, xl=10),
         ])
     ])
 
@@ -358,4 +369,14 @@ def get_ESPAM_callbacks(app):
                 }
             return options
 
-        
+        # @app.callback(
+        #     Output('ESPAM_slider', 'max'),
+        #     Output('ESPAM_slider', 'marks'),
+        #     Output('ESPAM_slider', 'value'),
+        #     Input('WLs_Store', 'data'),
+        # )
+        # def update_slider(WLs):
+        #     WLs = pd.DataFrame.from_dict(WLs)
+        #     max = WLs.shape[1]
+        #     marks = {i: f'{i}' for i in range(0, max, 25)}
+        #     return max, marks, max
