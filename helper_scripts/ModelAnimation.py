@@ -31,21 +31,6 @@ def ShapefilePlot(filename, ax, color, alpha=1, linewidth=1, shapetype='Polyline
 
 
 
-def SectionRead(config, Section, Value, ErrorMessage):
-    try:
-        val = config.get(Section, Value)
-        if not val or val=='""':
-            return False
-        else:
-            return val
-    except:
-        if ErrorMessage:
-            print(ErrorMessage)
-            return False
-        else:
-            return False
-
-
 def ModelAnimation(ConfigFile):
 
   
@@ -58,33 +43,26 @@ def ModelAnimation(ConfigFile):
 
 
     #Read section files
-    Output = SectionRead(config, 'Animation', 'Output', 'Missing Output Directory')
-    WL_Data = SectionRead(config, 'Animation', 'HeadFile', 'Missing Head File')
-    GIS_Path = SectionRead(config, 'Graphs', 'GIS_Files', False)
+    Output = f'Output/{ConfigFile["Project_ID"]}/Animation.mp4'
+    WL_Data = f'Output/{ConfigFile["Project_ID"]}/WLTest.npy'
+    GIS_Path = ConfigFile["GIS_options"]
 
     print(WL_Data)
 
-    hdobj = flopy.utils.binaryfile.HeadFile(WL_Data, precision='single')
-    WLTest = []
-    for time in hdobj.times:
-        WL = hdobj.get_data(totim=time)
-        WL = WL[0,:,:]
-        WLTest.append(WL)
+    WLTest = np.load(WL_Data)
 
-    WLTest = np.dstack(WLTest)
-
-    StartDate = SectionRead(config, 'Animation', 'StartDate', False)
+    StartDate = ConfigFile["start_date"]
     Dates = pd.date_range(start=StartDate, periods=WLTest.shape[2], freq='D')
 
 
 
-    Width = SectionRead(config, 'Animation', 'Width', False)
-    Height = SectionRead(config, 'Animation', 'Height', False)
+    Width = ConfigFile['figure_width']
+    Height = ConfigFile['figure_height']
     px = 1/plt.rcParams['figure.dpi']
     #Setup the plot formating
     fig, WLAx = plt.subplots(figsize=(Width*px, Height*px))
     
-    Title = SectionRead(config, 'Animation', 'Title', False)
+    Title = ConfigFile['figure_title']
     WLAx.set_title(Title)
 
 
@@ -102,7 +80,7 @@ def ModelAnimation(ConfigFile):
             Y[i,j] = i0-i*sc*np.cos(rot)+j*sc*np.sin(rot)
 
 
-    Boundary = pd.read_csv(SectionRead(config, 'Graphs', 'Active', 'Missing Active Cells Data')).values
+    Boundary = pd.read_csv('Input/ModelBoundary.csv').values
     Boundary = Boundary.astype(bool)
 
     SHPs = eval(SectionRead(config, 'GIS', 'Files', False))
@@ -127,7 +105,7 @@ def ModelAnimation(ConfigFile):
         ShapefilePlot(**ParamVals)
 
 
-    Lims = eval(SectionRead(config, 'Animation', 'ZoomBox', False))
+    Lims = ConfigFile['zoom']
     WLAx.set_yticklabels([])
     WLAx.set_xticklabels([])
     WLAx.set_xlim([Lims[0], Lims[2]])
@@ -140,10 +118,10 @@ def ModelAnimation(ConfigFile):
     Ti[Boundary] = np.nan
 
     #Set color scale
-    ScalePoints = eval(SectionRead(config, 'Animation', 'Scale_Points', False))
+    ScalePoints = ConfigFile['color_values']
     ScalePoints = [float(v) for v in ScalePoints]
-    ScaleColors = eval(SectionRead(config, 'Animation', 'Scale_Colors', False))
-    DateFormat = SectionRead(config, 'Animation', 'Date_Format', False)
+    ScaleColors = ConfigFile['colors']
+    DateFormat = ConfigFile['date_format']
 
     norm = matplotlib.colors.Normalize(min(ScalePoints), max(ScalePoints))
     colors=[]
@@ -194,12 +172,7 @@ def ModelAnimation(ConfigFile):
 
 
     #Run and save animation
-    plt.rcParams['animation.ffmpeg_path'] = SectionRead(config, 'Graphs', 'ffmpeg', 'Missing ffmpeg Directory')
+    plt.rcParams['animation.ffmpeg_path'] = 'ffmpeg-2021-07-06-git-758e2da289-full_build/bin/ffmpeg.exe'
 
     ani = animation.FuncAnimation(fig, update, frames=range(WLTest.shape[2]),repeat=False)
-    print(Output)
-    ani.save(f'{os.path.dirname(ConfigFile)}/{Output}.mp4', writer=animation.FFMpegWriter())
-
-
-if __name__ == '__main__':
-    ModelAnimation('C:/Users/Nstewart-MAddox/Documents/GitHub/ESPAM2/ModelRuns/MP31_v22/Test.ini')
+    ani.save(Output, writer=animation.FFMpegWriter())

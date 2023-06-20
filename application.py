@@ -8,6 +8,8 @@ import pandas as pd
 import numpy as np
 import json
 
+import os
+
 import flopy
 
 # from scipy.ndimage.interpolation import rotate
@@ -134,7 +136,15 @@ WLs_Store = dcc.Store(id='WLs_Store', data=WLRot.to_dict('dict'))
 WL_Store = dcc.Store(id='WL_Store')
 SHP_Store = dcc.Store(id='SHP_Store', data=[])
 
-Project_ID = dcc.Store(id='Project_ID', data=datetime.now().strftime('%Y%m%d%H%M%S%f'))
+# Project_ID = dcc.Store(id='Project_ID', data=datetime.now().strftime('%Y%m%d%H%M%S%f'))
+Project_ID = dcc.Store(id='Project_ID', data='20230620')
+
+# If folder doesn't exist, create it
+if not os.path.exists(f'./data/{Project_ID}'):
+    os.makedirs(f'Output/{Project_ID}')
+    
+    np.save(f'Output/{Project_ID}/WLTest.npy', WLTest)
+    
 
 print('step 2')
 

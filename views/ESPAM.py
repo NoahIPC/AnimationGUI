@@ -15,7 +15,7 @@ import os
 import json
 
 
-def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None, 
+def mapPlot(WL=[], GIS_Options=None, height=930, width=1870,
             colors=['red', 'white', 'white', 'green'], values=[-25, -2, 2, 25],
             Zoom=[2379000, 2752000, 1191000, 1508000]):
 
@@ -185,12 +185,23 @@ def make_ESPAM_layout():
     Colors = dcc.Store(id='colors', data={'data':['red', 'white', 'white', 'green']})
 
     Zoom = dcc.Store(id='zoom', data={'data': [2379000, 2752000, 1191000, 1508000]})
+    SettingsValues = dcc.Store(id='settings-values')
+
+    date_format_options = [
+        {"label": "MM/DD/YY", "value": "%m/%d/%y"},
+        {"label": "DD/MM/YY", "value": "%d/%m/%y"},
+        {"label": "MMM-DD-YYYY", "value": "%b-%d-%Y"},
+        {"label": "YYYY-MM-DD", "value": "%Y-%m-%d"},
+        {"label": "Month Year (Jan 2020)", "value": "%B %Y"},
+        {"label": "Year only (2020)", "value": "%Y"}
+    ]
 
     # Make content with a graph, a slider, a dropdown, and a file selector
     content = html.Div([
         dbc.Row([
             dbc.Col([
                 html.Div([
+                    dcc.Input(id='figure-title', type='text', value='ESPAM', className="my-input"),
                     html.Label('Select a Model Timestep'),
                     dcc.Slider(id='ESPAM_slider', className="my-slider"),
                     html.Label('Timestep: ', id='ESPAM_slider_label', className="my-label"),
@@ -203,12 +214,14 @@ def make_ESPAM_layout():
                     html.Button('Edit Base GIS Layers', id='ESPAM_modal_open', className="my-button"),
                     dcc.Upload(id='ESPAM_upload', children=html.Div(['Drag and Drop or ', html.A('Select Files')])),
                     html.Button('Save Settings', id='settings-save', className="my-button"),
+                    dcc.Dropdown(id='date-format', options=date_format_options, value="%m/%d/%y", className="my-dropdown"),
                     modal,
                     GIS_Options,
                     GIS_Files,
                     Color_Values,
                     Colors,
                     Zoom,
+                    SettingsValues,
                 ], className="my-div"),
             ], width=3, xl=2),
             dbc.Col([
@@ -479,4 +492,58 @@ def get_ESPAM_callbacks(app):
 
 
 
-        
+        @app.callback(
+            Output('settings-values', 'value'),
+            Input('settings-save', 'n_clicks'),
+            State('color-values', 'data'),
+            State('colors', 'data'),
+            State('GIS-options', 'data'),
+            State('date-format', 'value'),
+            State('date-freq', 'value'),
+            State('start-date', 'value'),
+            State('figure-height', 'value'),
+            State('figure-width', 'value'),
+            State('zoom', 'value'),
+            State('Project_ID', 'value'),
+            State('WLs_Store', 'data'),
+            State('animation-length', 'value'),
+            State('figure-title', 'value'),
+        )
+        def save_settings(n_clicks,
+                        color_values,
+                        colors,
+                        GIS_options,
+                        figure_height,
+                        figure_width,
+                        zoom,
+                        date_format,
+                        date_freq,
+                        start_date,
+                        Project_ID,
+                        WLs,
+                        animation_length,
+                        figure_title,
+                        ):
+            if n_clicks is None:
+                raise PreventUpdate
+            settings = {
+                'color_values': color_values,
+                'colors': colors,
+                'GIS_options': GIS_options,
+                'figure_height': figure_height,
+                'figure_width': figure_width,
+                'zoom': zoom,
+                'date_format': date_format,
+                'date_freq': date_freq,
+                'start_date': start_date,
+                'Project_ID': Project_ID,
+                'animation_length': animation_length,
+                'figure_title': figure_title,
+            }
+
+
+            with open(f'Output/{Project_ID}/settings.json', 'w') as f:
+                json.dump(settings, f)
+
+            return settings
+
