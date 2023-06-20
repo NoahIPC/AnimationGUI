@@ -6,6 +6,7 @@ from dash_extensions.enrich import dcc, html
 
 from scipy.ndimage import rotate
 
+from ModelAnimation import ModelAnimation
 
 import numpy as np
 import pandas as pd
@@ -204,6 +205,7 @@ def make_ESPAM_layout():
                     dcc.Input(id='figure-title', type='text', value='ESPAM', className="my-input"),
                     html.Label('Select a Model Timestep'),
                     dcc.Slider(id='ESPAM_slider', className="my-slider"),
+                    dcc.Dropdown(id='date-format', options=date_format_options, value="%m/%d/%y", className="my-dropdown"),
                     html.Label('Timestep: ', id='ESPAM_slider_label', className="my-label"),
                     html.Label('Start Date'),
                     dcc.Input(id='start_date', type='text', value='2000-01-01', className="my-input", pattern=r'\d{4}-\d{2}-\d{2}'),
@@ -214,7 +216,8 @@ def make_ESPAM_layout():
                     html.Button('Edit Base GIS Layers', id='ESPAM_modal_open', className="my-button"),
                     dcc.Upload(id='ESPAM_upload', children=html.Div(['Drag and Drop or ', html.A('Select Files')])),
                     html.Button('Save Settings', id='settings-save', className="my-button"),
-                    dcc.Dropdown(id='date-format', options=date_format_options, value="%m/%d/%y", className="my-dropdown"),
+                    html.Button('Load Settings', id='settings-load', className="my-button"),
+                    html.Button('Generate Animation', id='generate-animation', className="my-button"),
                     modal,
                     GIS_Options,
                     GIS_Files,
@@ -495,6 +498,7 @@ def get_ESPAM_callbacks(app):
         @app.callback(
             Output('settings-values', 'value'),
             Input('settings-save', 'n_clicks'),
+            Input('generate-animation', 'n_clicks'),
             State('color-values', 'data'),
             State('colors', 'data'),
             State('GIS-options', 'data'),
@@ -510,6 +514,7 @@ def get_ESPAM_callbacks(app):
             State('figure-title', 'value'),
         )
         def save_settings(n_clicks,
+                        n_clicks2,
                         color_values,
                         colors,
                         GIS_options,
@@ -524,7 +529,7 @@ def get_ESPAM_callbacks(app):
                         animation_length,
                         figure_title,
                         ):
-            if n_clicks is None:
+            if (n_clicks is None) and (n_clicks2 is None):
                 raise PreventUpdate
             settings = {
                 'color_values': color_values,
@@ -547,3 +552,34 @@ def get_ESPAM_callbacks(app):
 
             return settings
 
+        # @app.callback(
+        #     Input('settings-load', 'n_clicks'),
+        #     Output('settings-values', 'value'),
+        #     Output('Project_ID', 'value'),
+        #     Output('WLs_Store', 'data'),
+        #     Output('color-values', 'data'),
+        #     Output('colors', 'data'),
+        #     Output('GIS-options', 'data'),
+        #     Output('date-format', 'value'),
+        #     Output('date-freq', 'value'),
+        #     Output('start-date', 'value'),
+        #     Output('figure-height', 'value'),
+        #     Output('figure-width', 'value'),
+        #     Output('zoom', 'value'),
+        #     Output('animation-length', 'value'),
+        #     Output('figure-title', 'value'),
+        # )
+        # def load_settings(n_clicks):
+        #     if n_clicks is None:
+        #         raise PreventUpdate
+        #     Project_ID = 'test'
+        #     with open(f'Output/{Project_ID}/settings.json', 'r') as f:
+        #         settings = json.load(f)
+
+        #     WL = np.load(f'Output/{Project_ID}/WLTest.npy', allow_pickle=True)
+
+
+        #     return (settings, Project_ID, WL, settings['color_values'], settings['colors'], 
+        #             settings['GIS_options'], settings['date_format'], settings['date_freq'], 
+        #             settings['start_date'], settings['figure_height'], settings['figure_width'], 
+        #             settings['zoom'], settings['animation_length'], settings['figure_title'])
