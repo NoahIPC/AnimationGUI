@@ -4,7 +4,8 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash_extensions.enrich import dcc, html
 
-from scipy.ndimage.interpolation import rotate
+from scipy.ndimage import rotate
+
 
 import numpy as np
 import pandas as pd
@@ -15,7 +16,8 @@ import json
 
 
 def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None, 
-            colors=['red', 'white', 'white', 'green'], values=[-25, -2, 2, 25]):
+            colors=['red', 'white', 'white', 'green'], values=[-25, -2, 2, 25],
+            Zoom=[2379000, 2752000, 1191000, 1508000]):
 
     # Get zoom level of old figure
 
@@ -82,8 +84,8 @@ def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None,
 
 
     # Set the X and Y axis to the min and max of the model grid
-    fig.update_xaxes(range=[2379000, 2752000])
-    fig.update_yaxes(range=[1191000, 1508000])
+    fig.update_xaxes(range=[Zoom[0], Zoom[1]])
+    fig.update_yaxes(range=[Zoom[2], Zoom[3]])
 
     # Set the aspect ratio to 1
     fig.update_xaxes(scaleanchor="y", scaleratio=1)
@@ -96,8 +98,11 @@ def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None,
     fig.update_yaxes(showgrid=False)
     fig.update_layout(plot_bgcolor='white')
 
-    colors = [x for y, x in sorted(zip(values, colors))]
-    values = sorted(values)
+    def hex_to_rgb(hexa):
+        hexa = hexa.lstrip('#')
+        return tuple(int(hexa[i:i+2], 16)  for i in (0, 2, 4))
+    # Convert colors to rgb
+    colors = ['rgb({}, {}, {})'.format(*hex_to_rgb(i[1:])) if '#' in i else i for i in colors]
 
     # normalize the colorscale 0 to 1
     colorscale = [[(values[i]-values[0])/(values[-1]-values[0]), colors[i]] for i in range(len(values))]
@@ -179,14 +184,16 @@ def make_ESPAM_layout():
     Color_Values = dcc.Store(id='color-values', data={'data': [-25, -2, 2, 25]})
     Colors = dcc.Store(id='colors', data={'data':['red', 'white', 'white', 'green']})
 
+    Zoom = dcc.Store(id='zoom', data={'data': [2379000, 2752000, 1191000, 1508000]})
+
     # Make content with a graph, a slider, a dropdown, and a file selector
     content = html.Div([
         dbc.Row([
             dbc.Col([
                 html.Div([
                     html.Label('Select a Model Timestep'),
-                    dcc.Slider(id='ESPAM_slider', min=0, max=100, step=1, value=75, marks={i: f'{i}' for i in range(0, 101, 25)}, 
-                            className="my-slider"),
+                    dcc.Slider(id='ESPAM_slider', className="my-slider"),
+                    html.Label('Timestep: ', id='ESPAM_slider_label', className="my-label"),
                     html.Label('Start Date'),
                     dcc.Input(id='start_date', type='text', value='2000-01-01', className="my-input", pattern=r'\d{4}-\d{2}-\d{2}'),
                     html.Label('Model Timestep Frequency (Days)'),
@@ -195,11 +202,13 @@ def make_ESPAM_layout():
                     dcc.Input(id='animation-length', type='number', value=60, className="my-input"),
                     html.Button('Edit Base GIS Layers', id='ESPAM_modal_open', className="my-button"),
                     dcc.Upload(id='ESPAM_upload', children=html.Div(['Drag and Drop or ', html.A('Select Files')])),
+                    html.Button('Save Settings', id='settings-save', className="my-button"),
                     modal,
                     GIS_Options,
                     GIS_Files,
                     Color_Values,
                     Colors,
+                    Zoom,
                 ], className="my-div"),
             ], width=3, xl=2),
             dbc.Col([
@@ -216,26 +225,26 @@ def make_ESPAM_layout():
                         dbc.Col([
                             dbc.Row([
                                 dcc.Input(id='color-1-position', type='number', value=-25, className="color-position", debounce=True),
-                                dbc.Input(id='color-1', type='color', value='#ff0000', className="color-picker", style={'width': '50px', 'height': '50px'})
+                                dbc.Input(id='color-1', type='color', value='#ff0000', className="color-picker", style={'width': '50px', 'height': '50px'}, debounce=True)
                             ], id="color-row-1"),
                             dbc.Row([
                                 dcc.Input(id='color-2-position', type='number', value=-2, className="color-position", debounce=True),
-                                dbc.Input(id='color-2', type='color', value='#ffffff', className="color-picker", style={'width': '50px', 'height': '50px'})
+                                dbc.Input(id='color-2', type='color', value='#ffffff', className="color-picker", style={'width': '50px', 'height': '50px'}, debounce=True)
                             ], id="color-row-2"),
                             dbc.Row([
                                 dcc.Input(id='color-3-position', type='number', value=2, className="color-position", debounce=True),
-                                dbc.Input(id='color-3', type='color', value='#ffffff', className="color-picker", style={'width': '50px', 'height': '50px'})
+                                dbc.Input(id='color-3', type='color', value='#ffffff', className="color-picker", style={'width': '50px', 'height': '50px'}, debounce=True)
                             ], id="color-row-3"),
                             dbc.Row([
                                 dcc.Input(id='color-4-position', type='number', value=25, className="color-position", debounce=True),
-                                dbc.Input(id='color-4', type='color', value='#00FF00', className="color-picker", style={'width': '50px', 'height': '50px'})
+                                dbc.Input(id='color-4', type='color', value='#00FF00', className="color-picker", style={'width': '50px', 'height': '50px'}, debounce=True)
                             ], id="color-row-4"),
                         ], width=2),
                     ]),
                     dbc.Row([
                         html.Label('Figure Width', className="width-slider-label"),
                         dcc.Slider(id='figure-width', min=0, max=1280, step=50, value=1280, marks={i: f'{i}' for i in range(0, 1281, 200)}.update({1280: '1280'}),
-                            className="width-slider"),
+                            className="width-slider", debounce=True),
                     ]),
                 ])
             ], width=9, xl=10),
@@ -249,6 +258,19 @@ def make_ESPAM_layout():
 
 
 def get_ESPAM_callbacks(app):
+        
+        @app.callback(
+            Output('zoom', 'data'),
+            Input('ESPAM_graph', 'relayoutData'),
+            State('ESPAM_graph', 'figure'),
+        )
+        def update_zoom(relayoutData, figure):
+            if not relayoutData:
+                return no_update
+            try:
+                return {'data': list(relayoutData.values())}
+            except KeyError:
+                return {'data': figure['layout']['mapbox']['zoom']}
     
         @app.callback(
             Output('ESPAM_graph', 'figure'),
@@ -260,18 +282,19 @@ def get_ESPAM_callbacks(app):
             Input('figure-width', 'value'),
             Input('color-values', 'data'),
             Input('colors', 'data'),
+            State('zoom', 'data'),
         )
-        def update_graph(slider_value, WLs, GIS_Options, height, width, color_values, colors):
+        def update_graph(slider_value, WLs, GIS_Options, height, width, color_values, colors, zoom):
             # Make a simple plot
             WLs = pd.DataFrame.from_dict(WLs)
             WL = WLs.iloc[:, slider_value]
             WL = WL.values.reshape(198, 233)
 
-            float(WLs.columns[1])-float(WLs.columns[0])
+            WL[(WL>-0.1) & (WL<0.1)] = 0
 
-            return (mapPlot(WL, GIS_Options, height, width, color_values['data'], colors['data']), 
+            return (mapPlot(WL, GIS_Options=GIS_Options, height=height, width=width, 
+                            colors=colors['data'], values=color_values['data'], Zoom=zoom['data']),
                    pd.DataFrame(WL).to_dict('records'))
-        
         # @app.callback(
         #     Output('WLs_Store', 'data'),
         #     Input('ESPAM_upload', 'contents'),
@@ -380,6 +403,16 @@ def get_ESPAM_callbacks(app):
             return options
 
         @app.callback(
+                Input('ESPAM_slider', 'value'),
+                Output('ESPAM_slider_label', 'children'),
+                State('start_date', 'value'),
+                State('date_freq', 'value'),
+        )
+        def update_slider_label(value, start_date, date_freq):
+            return (pd.to_datetime(start_date) + pd.Timedelta(days=value*date_freq)).strftime('%Y-%m-%d')
+
+
+        @app.callback(
             Output('ESPAM_slider', 'max'),
             Output('ESPAM_slider', 'marks'),
             Output('ESPAM_slider', 'value'),
@@ -394,8 +427,8 @@ def get_ESPAM_callbacks(app):
                 start_date = pd.to_datetime(start_date)
             except:
                 return no_update, no_update, no_update
-            marks = {i: (start_date + pd.Timedelta(days=i*date_freq)).year for i in np.linspace(0, max, 3)}
-            return max, marks, max
+            marks = {i: str((start_date + pd.Timedelta(days=i*date_freq)).year) for i in np.linspace(0, max, 3)}
+            return int(max/2), marks, max
 
         @app.callback(
             Output('color-row-1', 'style'),
@@ -427,7 +460,7 @@ def get_ESPAM_callbacks(app):
             positions = (positions - np.min(positions)) / (np.max(positions) - np.min(positions))
 
             Top = 70
-            Height = 665
+            Height = 500
 
             positions = Top + positions * Height
             for i in range(3):
@@ -435,13 +468,15 @@ def get_ESPAM_callbacks(app):
                     positions[i+1] += 120
 
             return [{'top':f'{positions[3]}px', 'position':'absolute'},
-                    {'top':f'{positions[2]}px', 'position':'absolute'},
                     {'top':f'{positions[1]}px', 'position':'absolute'},
+                    {'top':f'{positions[2]}px', 'position':'absolute'},
                     {'top':f'{positions[0]}px', 'position':'absolute'},
-                    color_1_position, color_2_position, color_3_position, np.inf,
                     -np.inf, color_1_position, color_2_position, color_3_position,
+                    color_2_position, color_3_position, color_4_position, np.inf,
                     {'data':[color_1_position, color_2_position, color_3_position, color_4_position]},
                     {'data':[color_1, color_2, color_3, color_4]},
                     ]
+
+
 
         

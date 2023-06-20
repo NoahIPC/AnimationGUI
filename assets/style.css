@@ -5,14 +5,6 @@
     padding: 10px;
 }
 
-/* Styling the slider */
-.my-slider .rc-slider-track {
-    background-color: #888;
-}
-
-.my-slider .rc-slider-handle {
-    border-color: #888;
-}
 
 /* Styling the button */
 .my-button {
@@ -189,15 +181,6 @@
     border: 1px solid var(--color-blue);
   }
   
-  /* Style for sliders */
-  .my-slider {
-    width: 100%;
-    padding: 30px;
-  }
-  
-  .my-slider .rc-slider-track {
-    background-color: var(--color-blue);
-  }
   
   /* Style for graph */
   .ESPAM-graph {

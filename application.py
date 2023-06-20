@@ -1,27 +1,26 @@
-import numpy as np
-import pandas as pd
-from dash import Dash, Input, Output, State, dash_table, dcc, html, no_update
+from dash import dcc, html
 from dash_extensions.enrich import DashProxy, MultiplexerTransform, dcc, html
 
 import dash_bootstrap_components as dbc
+from datetime import datetime
+
+import pandas as pd
+import numpy as np
+import json
 
 import flopy
-import json
-import pickle
 
+# from scipy.ndimage.interpolation import rotate
 from scipy.ndimage.interpolation import rotate
 from scipy import interpolate
 
-import matplotlib
-
 from views.ESPAM import get_ESPAM_callbacks, make_ESPAM_layout
-# from views.Animation import get_animation_callbacks, make_animation_layout
 
 ESPAM_content = make_ESPAM_layout()
-# animation_content = make_animation_layout()
 
 from warnings import filterwarnings
 filterwarnings(action='ignore', category=DeprecationWarning, message='`np.bool` is a deprecated alias')
+
 
 
 def interpolate_missing_pixels(
@@ -87,12 +86,6 @@ BoundaryRot = np.flip(BoundaryRot, axis=0)
 
 Boundary = Boundary.astype(bool)
 
-norm = matplotlib.colors.Normalize(-25, 25)
-colors = [[norm(-25.0), "red"],
-          [norm(-2), "white"],
-          [norm(2), "white"],
-          [norm(25), "green"]]
-
 print('step 1')
 
 HeadFile = 'Input/ActualRecharge.hds'
@@ -119,6 +112,7 @@ for i in range(WLTest.shape[2]):
     WL, [jt, it] = rotate_image(WL, [0, 0], alpha)
     WL = np.flip(WL, axis=0)
     WL[~BoundaryRot] = np.nan
+
     # WL = interpolate_missing_pixels(WL, ~BoundaryRot)
     WL = WL.ravel()
     WLRot.append(WL)
@@ -131,19 +125,19 @@ WLRot.to_csv('Input/WL_Rot.csv', index=False)
 
 WLRot = pd.read_csv('Input/WL_Rot.csv')
 
+
 # Make a store for WLTest
 WLs_Store = dcc.Store(id='WLs_Store', data=WLRot.to_dict('dict'))
+
+# Make a store for WLTest
+# WLs_Store = dcc.Store(id='WLs_Store', data={})
 WL_Store = dcc.Store(id='WL_Store')
 SHP_Store = dcc.Store(id='SHP_Store', data=[])
 
+Project_ID = dcc.Store(id='Project_ID', data=datetime.now().strftime('%Y%m%d%H%M%S%f'))
+
 print('step 2')
 
-tabs = dbc.Tabs(
-    [
-        dbc.Tab(ESPAM_content, label="ESPAM"),
-        # dbc.Tab(animation_content, label="Animation"),
-    ]
-)
 
 app = DashProxy(transforms=[MultiplexerTransform()],
                 title="ESPAM",
@@ -157,16 +151,16 @@ app.layout = html.Div(
         ESPAM_content,
         WLs_Store,
         WL_Store,
-        SHP_Store
+        SHP_Store,
+        Project_ID,
     ]
 )
 
 
 
 get_ESPAM_callbacks(app)
-# get_animation_callbacks(app)
 
 print('step 3')
 
 if __name__ == "__main__":
-    app.run_server()
+    app.run_server(debug=True)
