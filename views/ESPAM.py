@@ -1,11 +1,10 @@
-import dash
-from dash import Dash, dcc, html, Input, Output, State, no_update, dash_table, ALL
+from dash import dcc, html, Input, Output, State, no_update, ALL
 from dash.exceptions import PreventUpdate
-import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from dash_extensions.enrich import dcc, html, MultiplexerTransform, DashProxy
-import dash_daq as daq
+from dash_extensions.enrich import dcc, html
+
+from scipy.ndimage.interpolation import rotate
 
 import numpy as np
 import pandas as pd
@@ -14,68 +13,6 @@ import flopy
 import os
 import json
 
-from scipy import interpolate
-
-
-def interpolate_missing_pixels(
-        image: np.ndarray,
-        mask: np.ndarray,
-        method: str = 'nearest',
-        fill_value: int = 0
-):
-    """
-    :param image: a 2D image
-    :param mask: a 2D boolean image, True indicates missing values
-    :param method: interpolation method, one of
-        'nearest', 'linear', 'cubic'.
-    :param fill_value: which value to use for filling up data outside the
-        convex hull of known pixel values.
-        Default is 0, Has no effect for 'nearest'.
-    :return: the image with missing values interpolated
-    """
-
-    h, w = image.shape[:2]
-    xx, yy = np.meshgrid(np.arange(w), np.arange(h))
-
-    known_x = xx[~mask]
-    known_y = yy[~mask]
-    known_v = image[~mask]
-    missing_x = xx[mask]
-    missing_y = yy[mask]
-
-    interp_values = interpolate.griddata(
-        (known_x, known_y), known_v, (missing_x, missing_y),
-        method=method, fill_value=fill_value
-    )
-
-    interp_image = image.copy()
-    interp_image[missing_y, missing_x] = interp_values
-
-    return interp_image
-
-
-
-def UpdateDataPlot(DataValues, PltLines, PltTypes, PltData, PltAxes, Date):
-    i=0
-    for (ax, data, p) in zip(PltAxes, PltData, PltTypes):
-        BaseHeight = np.zeros(len(DataValues))
-        for vals in PltData[data]:
-            mask = DataValues.index[DataValues.index<=Date]
-            line = PltLines[i]
-            if PltTypes[p]=='Line':
-                line.set_xdata(mask)
-                line.set_ydata(PltData[data][vals].loc[mask])
-            else:
-                LineData = PltData[data][vals].copy()
-                LineData.loc[DataValues.index[DataValues.index>Date]] = 0
-                c = line[0]._facecolor
-                z = line[0].zorder
-                line.remove()
-                line = PltAxes[ax].bar(DataValues.index, LineData+BaseHeight, width=31, color=c, zorder=z)
-                BaseHeight += LineData.values
-                PltLines[i] = line
-
-            i += 1
 
 def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None, 
             colors=['red', 'white', 'white', 'green'], values=[-25, -2, 2, 25]):
@@ -159,15 +96,13 @@ def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None,
     fig.update_yaxes(showgrid=False)
     fig.update_layout(plot_bgcolor='white')
 
-    colors = [y for y, x in sorted(zip(colors, values))]
+    colors = [x for y, x in sorted(zip(values, colors))]
     values = sorted(values)
 
     # normalize the colorscale 0 to 1
     colorscale = [[(values[i]-values[0])/(values[-1]-values[0]), colors[i]] for i in range(len(values))]
 
     if len(WL)>0:
-
-        rotR = np.deg2rad(31.4)
 
         i0 = 1191000
         j0 = 2379000
@@ -177,8 +112,8 @@ def mapPlot(WL=[], GIS_Options=None, height=930, width=1870, oldFig=None,
 
         WL = pd.DataFrame(WL)
         WL = WL.fillna(np.nan)
-        fig.add_trace(go.Contour(x=X, y=Y, z=WL.values, zmin=-25, zmax=25, 
-                                 contours=dict(start=-25, end=25, size=1),
+        fig.add_trace(go.Contour(x=X, y=Y, z=WL.values, zmin=min(values), zmax=max(values), 
+                                 contours=dict(start=min(values), end=max(values), size=1),
                                  line=dict(width=0.5, color='gray'), colorscale=colorscale))
         fig.update_layout(coloraxis_showscale=False)
 
@@ -253,7 +188,7 @@ def make_ESPAM_layout():
                     dcc.Slider(id='ESPAM_slider', min=0, max=100, step=1, value=75, marks={i: f'{i}' for i in range(0, 101, 25)}, 
                             className="my-slider"),
                     html.Label('Start Date'),
-                    dcc.Input(id='start_date', type='text', value='YYYY-MM-DD', className="my-input", pattern=r'\d{4}-\d{2}-\d{2}'),
+                    dcc.Input(id='start_date', type='text', value='2000-01-01', className="my-input", pattern=r'\d{4}-\d{2}-\d{2}'),
                     html.Label('Model Timestep Frequency (Days)'),
                     dcc.Input(id='date_freq', type='number', value=1, className="my-input"),
                     html.Label('Animation Length (Seconds)', id='animation-length-label', className="my-label"),
@@ -285,11 +220,11 @@ def make_ESPAM_layout():
                             ], id="color-row-1"),
                             dbc.Row([
                                 dcc.Input(id='color-2-position', type='number', value=-2, className="color-position", debounce=True),
-                                dbc.Input(id='color-2', type='color', value='#000000', className="color-picker", style={'width': '50px', 'height': '50px'})
+                                dbc.Input(id='color-2', type='color', value='#ffffff', className="color-picker", style={'width': '50px', 'height': '50px'})
                             ], id="color-row-2"),
                             dbc.Row([
                                 dcc.Input(id='color-3-position', type='number', value=2, className="color-position", debounce=True),
-                                dbc.Input(id='color-3', type='color', value='#000000', className="color-picker", style={'width': '50px', 'height': '50px'})
+                                dbc.Input(id='color-3', type='color', value='#ffffff', className="color-picker", style={'width': '50px', 'height': '50px'})
                             ], id="color-row-3"),
                             dbc.Row([
                                 dcc.Input(id='color-4-position', type='number', value=25, className="color-position", debounce=True),
@@ -332,9 +267,81 @@ def get_ESPAM_callbacks(app):
             WL = WLs.iloc[:, slider_value]
             WL = WL.values.reshape(198, 233)
 
+            float(WLs.columns[1])-float(WLs.columns[0])
 
-            return mapPlot(WL, GIS_Options, height, width, color_values['data'], colors['data']), pd.DataFrame(WL).to_dict('records')
+            return (mapPlot(WL, GIS_Options, height, width, color_values['data'], colors['data']), 
+                   pd.DataFrame(WL).to_dict('records'))
         
+        # @app.callback(
+        #     Output('WLs_Store', 'data'),
+        #     Input('ESPAM_upload', 'contents'),
+        #     State('ESPAM_upload', 'filename'),
+        #     State('ESPAM_upload', 'last_modified'),
+        # )
+        # def update_WLs(contents, filename, last_modified):
+            
+        #     def rotate_image(image, xy, angle):
+        #         im_rot = rotate(image, angle) 
+        #         org_center = (np.array(image.shape[:2][::-1])-1)/2.
+        #         rot_center = (np.array(im_rot.shape[:2][::-1])-1)/2.
+        #         org = xy-org_center
+        #         a = np.deg2rad(angle)
+        #         new = np.array([org[0]*np.cos(a) + org[1]*np.sin(a),
+        #                 -org[0]*np.sin(a) + org[1]*np.cos(a) ])
+        #         return im_rot, new+rot_center
+
+        #     alpha = 31.4
+
+        #     Active = pd.read_csv('Input/ModelBoundary.csv')
+
+        #     Boundary = np.zeros((104, 209), dtype=float)
+        #     for i, j in zip(Active[Active['ACTIVE'] == 1]['ROW_ID']-1, Active[Active['ACTIVE'] == 1]['COL_ID']-1):
+        #         Boundary[int(i), int(j)] = 1
+
+
+        #     BoundaryRot = rotate(Boundary, alpha)
+
+        #     BoundaryRot[BoundaryRot < 0.5] = 0
+        #     BoundaryRot = BoundaryRot.astype(bool)
+        #     BoundaryRot = np.flip(BoundaryRot, axis=0)
+
+        #     Boundary = Boundary.astype(bool)
+
+        #     HeadFile = 'Input/ActualRecharge.hds'
+
+        #     hdobj = flopy.utils.binaryfile.HeadFile(HeadFile, precision='single')
+        #     WLTest = []
+        #     for time in hdobj.times:
+        #         WL = hdobj.get_data(totim=time)
+        #         WL = WL[0,:,:]
+        #         WLTest.append(WL)
+
+        #     WLTest = np.dstack(WLTest)
+
+        #     WLRot = []
+
+        #     for i in range(WLTest.shape[2]):
+
+        #         WL = WLTest[:,:,i]
+
+        #         WL[~Boundary] = np.nan
+
+        #         WL, [jt, it] = rotate_image(WL, [0, 0], alpha)
+        #         WL = np.flip(WL, axis=0)
+        #         WL[~BoundaryRot] = np.nan
+        #         # WL = interpolate_missing_pixels(WL, ~BoundaryRot)
+        #         WL = WL.ravel()
+        #         WLRot.append(WL)
+
+        #     WLRot = np.array(WLRot).T
+
+        #     WLRot = pd.DataFrame(WLRot, columns=hdobj.times)
+
+        #     # Make a store for WLTest
+        #     WLs_Store = dcc.Store(id='WLs_Store', data=WLRot.to_dict('dict'))
+
+        #     return WLs_Store
+
         @app.callback(
             Output('ESPAM_modal', 'is_open'),
             Input('ESPAM_modal_open', 'n_clicks'),
@@ -387,8 +394,7 @@ def get_ESPAM_callbacks(app):
                 start_date = pd.to_datetime(start_date)
             except:
                 return no_update, no_update, no_update
-            marks = {i: (start_date + pd.Timedelta(days=i*date_freq)).year for i in range(0, max, 25)}
-            marks.update({max: (start_date + pd.Timedelta(days=max*date_freq)).year})
+            marks = {i: (start_date + pd.Timedelta(days=i*date_freq)).year for i in np.linspace(0, max, 3)}
             return max, marks, max
 
         @app.callback(
@@ -410,10 +416,10 @@ def get_ESPAM_callbacks(app):
             Input('color-2-position', 'value'),
             Input('color-3-position', 'value'),
             Input('color-4-position', 'value'),
-            Input('color-1', 'color'),
-            Input('color-2', 'color'),
-            Input('color-3', 'color'),
-            Input('color-4', 'color'),
+            Input('color-1', 'value'),
+            Input('color-2', 'value'),
+            Input('color-3', 'value'),
+            Input('color-4', 'value'),
         )
         def update_color_rows(color_1_position, color_2_position, color_3_position, color_4_position,
                               color_1, color_2, color_3, color_4):
@@ -425,15 +431,15 @@ def get_ESPAM_callbacks(app):
 
             positions = Top + positions * Height
             for i in range(3):
-                if (positions[i]-positions[i+1])<75:
-                    positions[i] = positions[i-1] + 75
+                if (positions[i]-positions[i+1])<120:
+                    positions[i+1] += 120
 
-            return [{'top':f'{Top+positions[3]*Height}px', 'position':'absolute'},
-                    {'top':f'{Top+positions[2]*Height}px', 'position':'absolute'},
-                    {'top':f'{Top+positions[1]*Height}px', 'position':'absolute'},
-                    {'top':f'{Top+positions[0]*Height}px', 'position':'absolute'},
-                    -np.inf, color_1_position, color_2_position, color_3_position,
+            return [{'top':f'{positions[3]}px', 'position':'absolute'},
+                    {'top':f'{positions[2]}px', 'position':'absolute'},
+                    {'top':f'{positions[1]}px', 'position':'absolute'},
+                    {'top':f'{positions[0]}px', 'position':'absolute'},
                     color_1_position, color_2_position, color_3_position, np.inf,
+                    -np.inf, color_1_position, color_2_position, color_3_position,
                     {'data':[color_1_position, color_2_position, color_3_position, color_4_position]},
                     {'data':[color_1, color_2, color_3, color_4]},
                     ]
