@@ -1,36 +1,14 @@
-/* styles.css file */
-
-/* Adding padding to all objects in the first column */
-.my-div * {
-    padding: 10px;
+body {
+    background-color: #FFFFFF;
+    font-family: Arial, sans-serif;
+    color: #000000;
 }
 
-
-/* Styling the button */
-.my-button {
-    background-color: #888;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 4px;  /* Adding rounded corners to the button */
-}
-
-/* Styling the input fields */
-.my-div input[type="number"] {
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;  /* Adding rounded corners to the input fields */
-}
-
-/* Aligning the items in the row */
-.my-div .row {
-    align-items: center;
+.my-div {
+    background-color: #FFFFFF;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
 .height-slider{
@@ -45,10 +23,80 @@
     transform: translate(0, -50%);
 }
 
+.my-button {
+    background-color: #56AE46;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 10px 2px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.my-button:hover {
+    background-color: #2574B6;
+}
+
+.my-input, .my-dropdown, .my-label {
+    margin-bottom: 10px;
+}
+
+.modal-header, .modal-footer {
+    background-color: #C6E8F1;
+    border-bottom: 1px solid #dee2e6;
+    border-top: 1px solid #dee2e6;
+}
+
+.modal-body {
+    padding: 15px;
+    background-color: #FFFFFF;
+}
+
+.dcc.Tabs .tab {
+    background: #C6E8F1;
+    color: #8E8E8E;
+    border: none;
+    padding: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.dcc.Tabs .tab:hover {
+    background: #56AE46;
+    color: #FFFFFF;
+}
+
+.dcc.Tabs .tab-selected {
+    background: #56AE46;
+    color: #FFFFFF;
+}
+
+.color-picker {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border: 1px solid #8E8E8E;
+    margin: 5px;
+}
+
+.color-position {
+    display: inline-block;
+    margin: 5px;
+}
+
+
+
+.ESPAM-graph {
+    width: 100%;
+    height: 100%;
+}
 .height-slider-label{
     position: relative;
     top: 50%;
-    left: -30px;
+    left: -10px;
     width: auto;
     transform: rotate(-90deg);
     transform-origin: left top;
@@ -59,162 +107,3 @@
     bottom:  -50px;
     left: 50%;
 }
-
-.tab-container{
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.ESPAM-graph{
-    position: relative;
-    width: 100%;
-    height: 100%;
-    left: -100px;
-}
-
-/*Set color variables*/
-:root {
-    --color-blue: #2574B6;
-    --color-green: #56AE46;
-    --color-gray: #8E8E8E;
-    --color-pale: #C6E8F1;
-    --color-white: #FFFFFF;
-  }
-  
-  /* Style for checkboxes */
-  input[type="checkbox"] {
-    margin-right: 5px;
-    height: 14px;
-    width: 14px;
-  }
-  
-  /* Style for dropdowns */
-  .Select-placeholder,
-  .Select--single > .Select-control .Select-value,
-  .Select--single > .Select-control .Select-value .Select-value-label,
-  .Select-input,
-  .Select-control,
-  .Select--menu {
-    font-size: 14px;
-    color: var(--color-gray);
-    line-height: 1.5;
-    border: 1px solid var(--color-gray);
-  }
-  
-  .Select-menu-outer {
-    z-index: 99;
-  }
-  
-  .Select-arrow {
-    margin-top: 8px;
-  }
-  
-  /* Style for modal windows */
-  .my-modal {
-    z-index: 10000 !important;
-  }
-  
-  /* Style for tabbed interface */
-  .my-tabs .nav-link.active {
-    background-color: var(--color-blue);
-    color: var(--color-white);
-  }
-  
-  .my-tabs .nav-link {
-    border: 1px solid var(--color-gray);
-    color: var(--color-gray);
-    background-color: var(--color-white);
-  }
-  
-  .my-tabs .nav-link:hover {
-    background-color: var(--color-pale);
-  }
-  
-  .my-tabs .nav-tabs {
-    border-bottom: 0px !important;
-  }
-  
-  .my-tabs .tab-content {
-    padding: 10px !important;
-  }
-  
-  /* Style for all buttons */
-  .my-button {
-    font-size: 14px;
-    padding: 5px 10px;
-    border-radius: 5px;
-    background-color: var(--color-blue);
-    border: none;
-    color: var(--color-white);
-    margin-top: 10px;
-    margin-right: 5px;
-  }
-  
-  .my-button:hover {
-    background-color: var(--color-pale);
-    color: var(--color-gray);
-  }
-  
-  /* Style for div containers */
-  .my-div {
-    border: 1px solid var(--color-gray);
-    padding: 10px;
-  }
-  
-  /* Style for input fields */
-  .my-input {
-    margin: 5px;
-    font-size: 14px;
-    color: var(--color-gray);
-    background-color: var(--color-white);
-    border: 1px solid var(--color-gray);
-    border-radius: 5px;
-    padding: 5px;
-  }
-  
-  .my-input:focus {
-    outline: none;
-    border: 1px solid var(--color-blue);
-  }
-  
-  
-  /* Style for graph */
-  .ESPAM-graph {
-    height: 720px;
-  }
-  
-  /* Style for color pickers */
-  .color-picker {
-    margin: 5px;
-    padding: 0px;
-    border: none;
-    border-radius: 5px;
-  }
-  
-  .color-picker:focus {
-    outline: none;
-  }
-  
-  .color-position {
-    width: 70px;
-    margin-right: 5px;
-  }
-  
-  /* Style for width slider */
-  .width-slider {
-    height: 100%;
-    margin-top: 15px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-  
-  
-  .height-slider-label {
-    padding: 5px;
-    text-align: center;
-  }
-  
