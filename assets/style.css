@@ -122,21 +122,21 @@ body {
     line-height: 100px;
 }
 
-.color-1-row {
+.color-1-position {
     top: 50%;
     position: relative;
 }
 
-.color-2-row {
+.color-2-position {
     top: 35%;
     position: relative;
 }
 
-.color-3-row {
+.color-3-position {
     top: 20%;
     position: relative;
 }
 
-.color-4-row {
+.color-4-position {
     position: relative;
 }

@@ -8,6 +8,7 @@ import os
 from views.Layout import make_ESPAM_layout
 from views.Callbacks import get_ESPAM_callbacks
 
+
 ESPAM_content = make_ESPAM_layout()
 
 from warnings import filterwarnings
@@ -19,11 +20,6 @@ WLs_Store = dcc.Store(id='WLs_Store', data={})
 WL_Store = dcc.Store(id='WL_Store')
 SHP_Store = dcc.Store(id='SHP_Store', data=[])
 
-
-Project_ID = '20230620'
-
-    
-Project_ID = dcc.Store(id='Project_ID', data=Project_ID)
 
 
 
@@ -40,7 +36,6 @@ app.layout = html.Div(
         WLs_Store,
         WL_Store,
         SHP_Store,
-        Project_ID,
     ]
 )
 
@@ -61,4 +56,4 @@ else:
 get_ESPAM_callbacks(app, background_callback_manager)
 
 if __name__ == "__main__":
-    app.run_server(debug=True, port=8050)
+    app.run_server()

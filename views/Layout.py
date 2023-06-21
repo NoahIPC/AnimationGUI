@@ -82,7 +82,19 @@ def make_ESPAM_layout():
     Colors = dcc.Store(id='colors', data={'data':['red', 'white', 'white', 'green']})
 
     Zoom = dcc.Store(id='zoom', data={'data': [2379000, 2752000, 1191000, 1508000]})
-    SettingsValues = dcc.Store(id='settings-values')
+    SettingsValues = dcc.Store(id='settings-values', data={
+                'color_values': Color_Values.data['data'],
+                'colors': Colors.data['data'],
+                'GIS_options': {},
+                'figure_height': 720,
+                'figure_width': 720,
+                'zoom': Zoom.data['data'],
+                'date_format': "%B %Y",
+                'date_freq': 1,
+                'start_date': '2020-01-01',
+                'animation_length': 60,
+                'figure_title': '',
+            })
 
     date_format_options = [
         {"label": "MM/DD/YY", "value": "%m/%d/%y"},
@@ -133,10 +145,10 @@ def make_ESPAM_layout():
         return input_div
 
     def create_color_input(id, position, color, tooltip=None):
-        color_input_div = html.Div([
+        color_input_div = dbc.Row([
             create_input(id=f'{id}-position', type='number', value=position),
             create_input(id=id, type='color', value=color),
-        ], id=f"{id}-row")
+        ], id=f"color-{id}-row", style={'position': 'relative'})
         return color_input_div
 
    # Create buttons with tooltips
@@ -158,7 +170,7 @@ def make_ESPAM_layout():
         return slider_div
 
     # Use the helper functions to create inputs
-    figure_title_input = create_input(id='figure-title', type='text', value='ESPAM', label='Figure Title ')
+    figure_title_input = create_input(id='figure-title', type='text', value='', label='Figure Title ')
     ESPAM_slider = create_slider(id='ESPAM_slider', min=0, max=100, step=1, value=0, marks={0: '0', 100: '100'}, label='Select Timestep')
     ESPAM_slider_label = html.Label('Timestep: ', id='ESPAM_slider_label', className="my-label")
     date_dropdown_label = html.Label('Date Format: ', id='date-dropdown-label', className="my-label")
@@ -168,12 +180,10 @@ def make_ESPAM_layout():
     animation_length_input = create_input(id='animation-length', type='number', value=60, label='Length of Animation (s) ')
 
 
-    color_input_1 = create_color_input(id='color-1', position=-25, color='#ff0000')
-    color_input_2 = create_color_input(id='color-2', position=-2, color='#ffffff')
-    color_input_3 = create_color_input(id='color-3', position=2, color='#ffffff')
-    color_input_4 = create_color_input(id='color-4', position=25, color='#00FF00')
-
-
+    color_input_1 = create_color_input(id='color-1', position=-25, color='#ff0000', top=50)
+    color_input_2 = create_color_input(id='color-2', position=-2, color='#ffffff', top=35)
+    color_input_3 = create_color_input(id='color-3', position=2, color='#ffffff', top=20)
+    color_input_4 = create_color_input(id='color-4', position=25, color='#00FF00', top=0)
 
 
     # Create ESPAM upload with tooltip

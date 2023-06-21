@@ -115,11 +115,9 @@ def get_ESPAM_callbacks(app, background_callback_manager):
             Output('date_freq', 'value'),
             Input('ESPAM_upload', 'contents'),
             State('ESPAM_upload', 'filename'),
-            State('ESPAM_upload', 'last_modified'),
-            State('Project_ID', 'data'),
             prevent_initial_call=True,
         )
-        def update_WLs(contents, filename, last_modified, Project_ID):
+        def update_WLs(contents, filename):
 
             alpha = 31.4
 
@@ -158,12 +156,8 @@ def get_ESPAM_callbacks(app, background_callback_manager):
                     WLTest.append(WL)
 
             WLTest = np.dstack(WLTest)
-
-            # If folder doesn't exist, create it
-            if not os.path.exists(os.path.join(os.getcwd(), f'Output/{Project_ID}')):
-                os.makedirs(f'Output/{Project_ID}')
                 
-                np.save(f'Output/{Project_ID}/WLTest.npy', WLTest)
+            np.save(f'Output/WLTest.npy', WLTest)
                 
 
             WLRot = []
@@ -323,8 +317,6 @@ def get_ESPAM_callbacks(app, background_callback_manager):
             State('figure-height', 'value'),
             State('figure-width', 'value'),
             State('zoom', 'data'),
-            State('Project_ID', 'data'),
-            State('WLs_Store', 'data'),
             State('animation-length', 'value'),
             State('figure-title', 'value'),
         )
@@ -339,8 +331,6 @@ def get_ESPAM_callbacks(app, background_callback_manager):
                 figure_height,
                 figure_width,
                 zoom,
-                Project_ID,
-                WLs,
                 animation_length,
                 figure_title):
             if n_clicks is None:
@@ -355,13 +345,12 @@ def get_ESPAM_callbacks(app, background_callback_manager):
                 'date_format': date_format,
                 'date_freq': date_freq,
                 'start_date': start_date,
-                'Project_ID': Project_ID,
                 'animation_length': animation_length,
                 'figure_title': figure_title,
             }
 
 
-            with open(f'Output/{Project_ID}/settings.json', 'w') as f:
+            with open(f'Output/settings.json', 'w') as f:
                 json.dump(settings, f)
 
             return settings
@@ -381,30 +370,54 @@ def get_ESPAM_callbacks(app, background_callback_manager):
 
         @app.callback(
             Input('generate-warning-label', 'children'),
-            State('settings-values', 'data'),
-            State('Project_ID', 'data'),
             Output("download-animation-file", "data"),
+            State('color-values', 'data'),
+            State('colors', 'data'),
+            State('GIS-options', 'data'),
+            State('date-format', 'value'),
+            State('date_freq', 'value'),
+            State('start_date', 'value'),
+            State('figure-height', 'value'),
+            State('figure-width', 'value'),
+            State('zoom', 'data'),
+            State('animation-length', 'value'),
+            State('figure-title', 'value'),
             prevent_initial_call=True,
             background=True,
             manager=background_callback_manager,
         )
-        def generate_animation(n_clicks, settings, Project_ID):
+        def generate_animation(n_clicks, color_values, colors, 
+                               GIS_options, date_format, date_freq, start_date, 
+                               figure_height, figure_width, zoom, animation_length, figure_title):
+
+            settings = {
+                'color_values': color_values['data'],
+                'colors': colors['data'],
+                'GIS_options': GIS_options,
+                'figure_height': figure_height,
+                'figure_width': figure_width,
+                'zoom': zoom['data'],
+                'date_format': date_format,
+                'date_freq': date_freq,
+                'start_date': start_date,
+                'animation_length': animation_length,
+                'figure_title': figure_title,
+            }
             
             ModelAnimation(settings)
 
-            return dcc.send_file(f'Output/{Project_ID}/Animation.mp4')
+            return dcc.send_file(f'Output/Animation.mp4')
 
         @app.callback(
             Output("download-settings-file", "data"),
-            State('Project_ID', 'data'),
             Input("settings-save", "n_clicks"),
             prevent_initial_call=True,
         )
-        def func(Project_ID, n_clicks):
+        def func(n_clicks):
             if n_clicks is None:
                 raise PreventUpdate
             
-            return dcc.send_file(f'Output/{Project_ID}/settings.json')
+            return dcc.send_file(f'Output/settings.json')
         
         @app.callback(
             Output('generate-warning-label', 'children'),
@@ -421,7 +434,6 @@ def get_ESPAM_callbacks(app, background_callback_manager):
         # @app.callback(
         #     Input('settings-load', 'n_clicks'),
         #     Output('settings-values', 'value'),
-        #     Output('Project_ID', 'value'),
         #     Output('WLs_Store', 'data'),
         #     Output('color-values', 'data'),
         #     Output('colors', 'data'),
@@ -438,14 +450,13 @@ def get_ESPAM_callbacks(app, background_callback_manager):
         # def load_settings(n_clicks):
         #     if n_clicks is None:
         #         raise PreventUpdate
-        #     Project_ID = 'test'
-        #     with open(f'Output/{Project_ID}/settings.json', 'r') as f:
+        #     with open(f'Output/settings.json', 'r') as f:
         #         settings = json.load(f)
 
-        #     WL = np.load(f'Output/{Project_ID}/WLTest.npy', allow_pickle=True)
+        #     WL = np.load(f'Output/WLTest.npy', allow_pickle=True)
 
 
-        #     return (settings, Project_ID, WL, settings['color_values'], settings['colors'], 
+        #     return (settings, WL, settings['color_values'], settings['colors'], 
         #             settings['GIS_options'], settings['date_format'], settings['date_freq'], 
         #             settings['start_date'], settings['figure_height'], settings['figure_width'], 
         #             settings['zoom'], settings['animation_length'], settings['figure_title'])

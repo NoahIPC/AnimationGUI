@@ -3,9 +3,7 @@ import dash_core_components as dcc
 from dash import html
 import flopy.utils.binaryfile as bf
 from dash.dependencies import Input, Output, State
-from flask import Flask
 import base64
-import io
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 

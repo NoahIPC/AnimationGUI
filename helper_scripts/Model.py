@@ -12,37 +12,24 @@ import configparser
 import os
 
 
-#Needs to be formatted JSON can use ArcMap to convert shapefile
-# def ShapefilePlot(filename, ax, line_color, fill_color, line_width, opacity, zorder):
+def ShapefilePlot(filename, ax, line_color, fill_color, line_width, opacity, zorder):
+    with open(filename) as json_file:
+        data = json.load(json_file)
 
-#%%
-shp = 'AmericanFalls'
+    for feat in data['features']:
+        geom = feat['geometry']
+        geomType = list(geom.keys())[0]
+        if geomType=='rings':
+            for polygon in geom[geomType]:
+                points = np.array(polygon)
+                ax.fill(points[:,0], points[:,1], facecolor=fill_color, edgecolor=line_color, 
+                        alpha=opacity, linewidth=line_width, zorder=zorder)
+        elif geomType=='paths':
+                for points in geom[geomType]:
+                    points = np.array(points)
+                    ax.plot(points[:,0], points[:,1], c=line_color, alpha=opacity, linewidth=line_width, 
+                            zorder=zorder)
 
-filename = f'../GIS/{shp}.json'
-ax=WLAx
-line_color=ConfigFile['GIS_options'][shp]['line-color']
-fill_color=ConfigFile['GIS_options'][shp]['fill-color']
-line_width=ConfigFile['GIS_options'][shp]['line-width']
-opacity=ConfigFile['GIS_options'][shp]['opacity']
-zorder=ConfigFile['GIS_options'][shp]['draw-order']
-
-
-with open(filename) as json_file:
-    data = json.load(json_file)
-
-for feat in data['features']:
-    geom = feat['geometry']
-    geomType = list(geom.keys())[0]
-    if geomType=='rings':
-        for polygon in geom[geomType]:
-            points = np.array(polygon)
-            plt.fill(points[:,0], points[:,1], facecolor=fill_color, edgecolor=line_color, 
-                    alpha=opacity, linewidth=line_width, zorder=zorder)
-    elif geomType=='paths':
-            for points in geom[geomType]:
-                points = np.array(points)
-                plt.plot(points[:,0], points[:,1], c=line_color, alpha=opacity, linewidth=line_width, 
-                        zorder=zorder)
 
 #%%
 
@@ -50,8 +37,8 @@ with open('../Output/20230620/settings.json') as json_file:
     ConfigFile = json.load(json_file)
 
 #Read section files
-Output = f'../Output/{ConfigFile["Project_ID"]}/Animation.mp4'
-WL_Data = f'../Output/{ConfigFile["Project_ID"]}/WLTest.npy'
+Output = f'../Output/Animation.mp4'
+WL_Data = f'../Output/WLTest.npy'
 GIS_Path = ConfigFile["GIS_options"]
 
 print(WL_Data)
@@ -61,7 +48,15 @@ WLTest = np.load(WL_Data)
 StartDate = ConfigFile["start_date"]
 Dates = pd.date_range(start=StartDate, periods=WLTest.shape[2], freq='D')
 
+hdobj = flopy.utils.binaryfile.HeadFile('../ActualRecharge.hds', precision='single')
 
+WLTest = []
+for time in hdobj.times:
+    WL = hdobj.get_data(totim=time)
+    WL = WL[0,:,:]
+    WLTest.append(WL)
+
+WLTest = np.dstack(WLTest)
 
 Width = ConfigFile['figure_width']
 Height = ConfigFile['figure_height']

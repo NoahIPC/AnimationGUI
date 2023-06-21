@@ -37,9 +37,8 @@ def ModelAnimation(ConfigFile):
   
 
     #Read section files
-    Output = f'Output/{ConfigFile["Project_ID"]}/Animation.mp4'
-    WL_Data = f'Output/{ConfigFile["Project_ID"]}/WLTest.npy'
-    GIS_Path = ConfigFile["GIS_options"]
+    Output = f'Output/Animation.mp4'
+    WL_Data = f'Output/WLTest.npy'
 
     print(WL_Data)
 
@@ -160,7 +159,7 @@ def ModelAnimation(ConfigFile):
             contf = WLAx.contourf(X, Y, Ti, np.linspace(min(ScalePoints), max(ScalePoints), 50), extend='both', cmap=cmap)
             cont = WLAx.contour(X, Y, Ti, np.linspace(min(ScalePoints), max(ScalePoints), 50), extend='both', colors='gray', linewidths=0.5)
 
-            dateText = WLAx.text(2400000, 1460000, date.strftime(DateFormat),fontsize=36,
+            dateText = WLAx.text(2400000, 1460000, date.strftime(DateFormat),fontsize=18,
                        bbox=dict(boxstyle="round",
                        fc=(1., 1, 1),
                        ec=(0, 0, 0),
@@ -174,11 +173,11 @@ def ModelAnimation(ConfigFile):
 
     n = WLTest.shape[2]
 
-    ani = animation.FuncAnimation(fig, update, frames=range(n), repeat=False,
-                                  interval=int(ConfigFile['animation_length']*1000/n))
-    ani.save(Output, writer=animation.FFMpegWriter(), dpi=300)
+    ani = animation.FuncAnimation(fig, update, frames=n, repeat=False,
+                                  interval=int(ConfigFile['animation_length']*1000/n)*60)
+    ani.save(Output, writer=animation.FFMpegWriter(fps=10), dpi=300)
 
 if __name__ == '__main__':
-    with open('Output/20230620/settings.json') as json_file:
+    with open('Output/settings.json') as json_file:
         ConfigFile = json.load(json_file)
     ModelAnimation(ConfigFile)
