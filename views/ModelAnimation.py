@@ -173,9 +173,8 @@ def ModelAnimation(ConfigFile):
 
     n = WLTest.shape[2]
 
-    ani = animation.FuncAnimation(fig, update, frames=n, repeat=False,
-                                  interval=int(ConfigFile['animation_length']*1000/n)*60)
-    ani.save(Output, writer=animation.FFMpegWriter(fps=10), dpi=300)
+    ani = animation.FuncAnimation(fig, update, frames=n, repeat=False)
+    ani.save(Output, writer=animation.FFMpegWriter(fps=n/ConfigFile['animation_length']), dpi=300)
 
 if __name__ == '__main__':
     with open('Output/settings.json') as json_file:

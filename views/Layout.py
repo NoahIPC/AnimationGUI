@@ -180,10 +180,10 @@ def make_ESPAM_layout():
     animation_length_input = create_input(id='animation-length', type='number', value=60, label='Length of Animation (s) ')
 
 
-    color_input_1 = create_color_input(id='color-1', position=-25, color='#ff0000', top=50)
-    color_input_2 = create_color_input(id='color-2', position=-2, color='#ffffff', top=35)
-    color_input_3 = create_color_input(id='color-3', position=2, color='#ffffff', top=20)
-    color_input_4 = create_color_input(id='color-4', position=25, color='#00FF00', top=0)
+    color_input_1 = create_color_input(id='color-1', position=-25, color='#ff0000')
+    color_input_2 = create_color_input(id='color-2', position=-2, color='#ffffff')
+    color_input_3 = create_color_input(id='color-3', position=2, color='#ffffff')
+    color_input_4 = create_color_input(id='color-4', position=25, color='#00FF00')
 
 
     # Create ESPAM upload with tooltip
