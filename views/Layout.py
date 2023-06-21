@@ -1,23 +1,12 @@
-from dash import dcc, html, Input, Output, State, no_update, ALL
-from dash.exceptions import PreventUpdate
-import plotly.graph_objects as go
+from dash import dcc, html
 import dash_bootstrap_components as dbc
 from dash_extensions.enrich import dcc, html
 
-from scipy.ndimage import rotate
-
-from views.ModelAnimation import ModelAnimation
-
-import numpy as np
-import pandas as pd
-import flopy
 
 import os
-import json
 
 import dash_bootstrap_components as dbc
-import dash_html_components as html
-from dash import dcc
+from dash import html
 
 from views.mapPlot import mapPlot
 
@@ -101,7 +90,7 @@ def make_ESPAM_layout():
         {"label": "MMM-DD-YYYY", "value": "%b-%d-%Y"},
         {"label": "YYYY-MM-DD", "value": "%Y-%m-%d"},
         {"label": "Month Year (Jan 2020)", "value": "%B %Y"},
-        {"label": "Year only (2020)", "value": "%Y"}
+        {"label": "Year only (2020)", "value": "%Y"},
     ]
 
     tooltips = {
@@ -153,7 +142,7 @@ def make_ESPAM_layout():
    # Create buttons with tooltips
     def create_button(id, label, disabled=False):
         button_div = html.Div([
-            html.Button(label, id=id, className="my-button", disabled=disabled),
+            dbc.Button(label, id=id, className="my-button", disabled=disabled),
             create_tooltip(id),
         ])
         return button_div
@@ -173,7 +162,7 @@ def make_ESPAM_layout():
     ESPAM_slider = create_slider(id='ESPAM_slider', min=0, max=100, step=1, value=0, marks={0: '0', 100: '100'}, label='Select Timestep')
     ESPAM_slider_label = html.Label('Timestep: ', id='ESPAM_slider_label', className="my-label")
     date_dropdown_label = html.Label('Date Format: ', id='date-dropdown-label', className="my-label")
-    date_format_dropdown = dcc.Dropdown(id='date-format', options=date_format_options, value="%m/%d/%y", className="my-dropdown")
+    date_format_dropdown = dcc.Dropdown(id='date-format', options=date_format_options, value="%B %Y", className="my-dropdown")
     start_date_input = create_input(id='start_date', type='text', value='2000-01-01', label='Start Date ')
     date_freq_input = create_input(id='date_freq', type='number', value=1, label='Date Frequency ')
     animation_length_input = create_input(id='animation-length', type='number', value=60, label='Length of Animation (s) ')
@@ -189,16 +178,16 @@ def make_ESPAM_layout():
 
     # Create ESPAM upload with tooltip
     ESPAM_upload = html.Div([
-        dcc.Upload(id='ESPAM_upload', children=html.Div(['Drag and Drop or ', html.A('Select Files')])),
+        dcc.Upload(id='ESPAM_upload', children=html.Div(['Drag and Drop or ', html.A('Select Files')]), className="my-upload"),
         create_tooltip('ESPAM_upload'),
     ])
 
     # Create buttons
-    ESPAM_modal_open_button = create_button(id='ESPAM_modal_open', label='Edit Base GIS Layers')
-    settings_save_button = create_button(id='settings-save', label='Save Settings')
-    settings_load_button = create_button(id='settings-load', label='Load Settings')
-    generate_animation_button = create_button(id='generate-animation', label='Generate Animation')
-    download_animation_button = create_button(id='download-animation', label='Download Animation', disabled=True)
+    ESPAM_modal_open_button = create_button(id='ESPAM_modal_open', label='Edit Base GIS Layers', disabled=True)
+    settings_save_button = dbc.Button('Download Settings', id='settings-save', disabled=True)
+    settings_load_button = dbc.Button('Load Settings', id='settings-load', disabled=True)
+    generate_animation_button = dbc.Button('Download Animation', id='generate-animation', disabled=True)
+    generate_warning_label = html.Label('', id='generate-warning-label', className="my-label")
 
     # Create sliders
     figure_height_slider = create_slider(id='figure-height', label='Figure Height', 
@@ -215,12 +204,20 @@ def make_ESPAM_layout():
         dbc.CardHeader("Output Settings"),
         dbc.CardBody([
             dbc.Row([
-                dbc.Col(figure_title_input),
-                dbc.Col(settings_save_button),
-                dbc.Col(settings_load_button),
-                dbc.Col(generate_animation_button),
-                dbc.Col(download_animation_button),
-            ])
+                figure_title_input,
+                dbc.ButtonGroup([
+                    settings_save_button,
+                    settings_load_button,
+                    generate_animation_button,
+                    create_tooltip('settings-save'),
+                    create_tooltip('settings-load'),
+                    create_tooltip('generate-animation'),
+                    create_tooltip('download-animation'),
+                    dcc.Download(id='download-animation-file'),
+                    dcc.Download(id='download-settings-file'),
+                ], vertical=True),
+            ]),
+            generate_warning_label,
         ])
     ])
 
@@ -229,12 +226,12 @@ def make_ESPAM_layout():
         dbc.CardHeader("Date Settings"),
         dbc.CardBody([
             dbc.Row([
-                dbc.Col(ESPAM_slider),
-                dbc.Col(ESPAM_slider_label),
-                dbc.Col(start_date_input),
-                dbc.Col(date_freq_input),
-                dbc.Col(date_dropdown_label),
-                dbc.Col(date_format_dropdown),
+                ESPAM_slider,
+                ESPAM_slider_label,
+                start_date_input,
+                date_freq_input,
+                date_dropdown_label,
+                date_format_dropdown,
             ]),
         ]),
     ])
@@ -258,7 +255,7 @@ def make_ESPAM_layout():
                     Zoom,
                     SettingsValues,
                 ], className="my-div"),
-            ], width=2),
+            ], width=3),
             dbc.Col([
                 dbc.Row([
                     dbc.Col([

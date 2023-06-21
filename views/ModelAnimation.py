@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 import numpy as np
 import json
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 import matplotlib.animation as animation
 import matplotlib.colors
 import flopy
@@ -134,8 +134,9 @@ def ModelAnimation(ConfigFile):
             global cont
             global contf
             global dateText
-            global Sent
             date = Dates[i]
+
+            print(i)
 
             #Filter model data for cleaner visualization
             Ti = WLTest[:,:,i]
@@ -157,7 +158,7 @@ def ModelAnimation(ConfigFile):
 
 
             contf = WLAx.contourf(X, Y, Ti, np.linspace(min(ScalePoints), max(ScalePoints), 50), extend='both', cmap=cmap)
-            contf = WLAx.contour(X, Y, Ti, np.linspace(min(ScalePoints), max(ScalePoints), 50), extend='both', colors='gray', linewidths=0.5)
+            cont = WLAx.contour(X, Y, Ti, np.linspace(min(ScalePoints), max(ScalePoints), 50), extend='both', colors='gray', linewidths=0.5)
 
             dateText = WLAx.text(2400000, 1460000, date.strftime(DateFormat),fontsize=36,
                        bbox=dict(boxstyle="round",

@@ -18,8 +18,6 @@ import os
 import json
 
 import dash_bootstrap_components as dbc
-import dash_html_components as html
-from dash import dcc
 
 from views.mapPlot import mapPlot
 
@@ -69,7 +67,7 @@ def rotate_image(image, xy, angle):
             -org[0]*np.sin(a) + org[1]*np.cos(a) ])
     return im_rot, new+rot_center
 
-def get_ESPAM_callbacks(app):
+def get_ESPAM_callbacks(app, background_callback_manager):
         
         @app.callback(
             Output('zoom', 'data'),
@@ -95,11 +93,15 @@ def get_ESPAM_callbacks(app):
             Input('color-values', 'data'),
             Input('colors', 'data'),
             State('zoom', 'data'),
+            prevent_initial_call=True
         )
         def update_graph(slider_value, WLs, GIS_Options, height, width, color_values, colors, zoom):
             # Make a simple plot
             WLs = pd.DataFrame.from_dict(WLs)
-            WL = WLs.iloc[:, slider_value]
+            try:
+                WL = WLs.iloc[:, slider_value]
+            except IndexError:
+                raise PreventUpdate
             WL = WL.values.reshape(198, 233)
 
             WL[(WL>-0.1) & (WL<0.1)] = 0
@@ -110,10 +112,12 @@ def get_ESPAM_callbacks(app):
         
         @app.callback(
             Output('WLs_Store', 'data'),
+            Output('date_freq', 'value'),
             Input('ESPAM_upload', 'contents'),
             State('ESPAM_upload', 'filename'),
             State('ESPAM_upload', 'last_modified'),
             State('Project_ID', 'data'),
+            prevent_initial_call=True,
         )
         def update_WLs(contents, filename, last_modified, Project_ID):
 
@@ -184,13 +188,16 @@ def get_ESPAM_callbacks(app):
 
             WLRot = pd.DataFrame(WLRot, columns=hdobj.times)
 
-            return WLRot.to_dict('records')
+            freq = hdobj.times[1]-hdobj.times[0]
+
+            return WLRot.to_dict('records'), freq
 
         @app.callback(
             Output('ESPAM_modal', 'is_open'),
             Input('ESPAM_modal_open', 'n_clicks'),
             Input('ESPAM_modal_close', 'n_clicks'),
-            State('ESPAM_modal', 'is_open')
+            State('ESPAM_modal', 'is_open'),
+            prevent_initial_call=True
         )
         def toggle_modal(n1, n2, is_open):
             if n1 or n2:
@@ -207,6 +214,7 @@ def get_ESPAM_callbacks(app):
             State({'type':'opacity', 'index':ALL}, 'value'),
             State({'type':'draw-order', 'index':ALL}, 'value'),
             State('GIS_Files', 'data'),
+            prevent_initial_call=True
         )
         def update_gis_options(n_clicks, visible, line_color, fill_color, line_width, opacity, draw_order, GIS_Files):
             if n_clicks is None:
@@ -228,7 +236,8 @@ def get_ESPAM_callbacks(app):
                 Output('ESPAM_slider_label', 'children'),
                 State('start_date', 'value'),
                 State('date_freq', 'value'),
-                State('date-format', 'value')
+                State('date-format', 'value'),
+                prevent_initial_call=True
         )
         def update_slider_label(value, start_date, date_freq, date_format):
             return 'Date: '+(pd.to_datetime(start_date) + pd.Timedelta(days=value*date_freq)).strftime(date_format)
@@ -275,6 +284,7 @@ def get_ESPAM_callbacks(app):
             Input('color-2', 'value'),
             Input('color-3', 'value'),
             Input('color-4', 'value'),
+            prevent_initial_call=True
         )
         def update_color_rows(color_1_position, color_2_position, color_3_position, color_4_position,
                               color_1, color_2, color_3, color_4):
@@ -317,7 +327,6 @@ def get_ESPAM_callbacks(app):
             State('WLs_Store', 'data'),
             State('animation-length', 'value'),
             State('figure-title', 'value'),
-            prevent_initial_call=True
         )
         def save_settings(
                 n_clicks,
@@ -356,20 +365,58 @@ def get_ESPAM_callbacks(app):
                 json.dump(settings, f)
 
             return settings
-
+        
         @app.callback(
-            Input('generate-animation', 'n_clicks'),
-            State('settings-values', 'data'),
-            Output('download-animation', 'disabled'),
+            Input('WLs_Store', 'data'),
+            Output('ESPAM_modal_open', 'disabled'),
+            Output('settings-save', 'disabled'),
+            Output('settings-load', 'disabled'),
+            Output('generate-animation', 'disabled'),
             prevent_initial_call=True
         )
-        def generate_animation(n_clicks, settings):
-            if n_clicks is None:
+        def enable_buttons(WLs):
+            if WLs is None:
                 raise PreventUpdate
+            return False, False, False, False
+
+        @app.callback(
+            Input('generate-warning-label', 'children'),
+            State('settings-values', 'data'),
+            State('Project_ID', 'data'),
+            Output("download-animation-file", "data"),
+            prevent_initial_call=True,
+            background=True,
+            manager=background_callback_manager,
+        )
+        def generate_animation(n_clicks, settings, Project_ID):
             
             ModelAnimation(settings)
 
-            return False
+            return dcc.send_file(f'Output/{Project_ID}/Animation.mp4')
+
+        @app.callback(
+            Output("download-settings-file", "data"),
+            State('Project_ID', 'data'),
+            Input("settings-save", "n_clicks"),
+            prevent_initial_call=True,
+        )
+        def func(Project_ID, n_clicks):
+            if n_clicks is None:
+                raise PreventUpdate
+            
+            return dcc.send_file(f'Output/{Project_ID}/settings.json')
+        
+        @app.callback(
+            Output('generate-warning-label', 'children'),
+            Output('generate-warning-label', 'style'),
+            Input('generate-animation', 'n_clicks'),
+            prevent_initial_call=True
+        )
+        def generate_animation(n_clicks):
+            if n_clicks is None:
+                raise PreventUpdate
+            
+            return 'Generating animation. This may take a while.', {'color':'red'}
 
         # @app.callback(
         #     Input('settings-load', 'n_clicks'),

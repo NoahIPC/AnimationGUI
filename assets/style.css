@@ -11,13 +11,13 @@ body {
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
 }
 
-.height-slider{
+.height-slider {
     position: relative;
 }
 
-.width-slider{
+.width-slider {
     position: relative;
-    width: 1280px;
+    width: 720px;
     bottom: 0;
     left: 0;
     transform: translate(0, -50%);
@@ -41,11 +41,14 @@ body {
     background-color: #2574B6;
 }
 
-.my-input, .my-dropdown, .my-label {
+.my-input,
+.my-dropdown,
+.my-label {
     margin-bottom: 10px;
 }
 
-.modal-header, .modal-footer {
+.modal-header,
+.modal-footer {
     background-color: #C6E8F1;
     border-bottom: 1px solid #dee2e6;
     border-top: 1px solid #dee2e6;
@@ -93,7 +96,8 @@ body {
     width: 100%;
     height: 100%;
 }
-.height-slider-label{
+
+.height-slider-label {
     position: relative;
     top: 50%;
     left: -10px;
@@ -102,8 +106,37 @@ body {
     transform-origin: left top;
 }
 
-.width-slider-label{
+.width-slider-label {
     position: relative;
-    bottom:  -50px;
+    bottom: -50px;
     left: 50%;
+}
+
+.my-upload {
+    font-weight: bold;
+    border: 1px solid #6c6;
+    background: #eee;
+    text-align: center;
+    height: 100px;
+    vertical-align: middle;
+    line-height: 100px;
+}
+
+.color-1-row {
+    top: 50%;
+    position: relative;
+}
+
+.color-2-row {
+    top: 35%;
+    position: relative;
+}
+
+.color-3-row {
+    top: 20%;
+    position: relative;
+}
+
+.color-4-row {
+    position: relative;
 }

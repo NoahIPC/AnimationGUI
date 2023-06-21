@@ -2,19 +2,8 @@ from dash import dcc, html
 from dash_extensions.enrich import DashProxy, MultiplexerTransform, dcc, html
 
 import dash_bootstrap_components as dbc
-from datetime import datetime
-
-import pandas as pd
-import numpy as np
-import json
 
 import os
-
-import flopy
-
-# from scipy.ndimage.interpolation import rotate
-from scipy.ndimage.interpolation import rotate
-from scipy import interpolate
 
 from views.Layout import make_ESPAM_layout
 from views.Callbacks import get_ESPAM_callbacks
@@ -26,21 +15,16 @@ filterwarnings(action='ignore', category=DeprecationWarning, message='`np.bool` 
 
 
 # Make a store for WLTest
-# WLs_Store = dcc.Store(id='WLs_Store', data=WLRot.to_dict('dict'))
-
-# Make a store for WLTest
 WLs_Store = dcc.Store(id='WLs_Store', data={})
 WL_Store = dcc.Store(id='WL_Store')
 SHP_Store = dcc.Store(id='SHP_Store', data=[])
 
-# Project_ID = dcc.Store(id='Project_ID', data=datetime.now().strftime('%Y%m%d%H%M%S%f'))
+
 Project_ID = '20230620'
 
     
 Project_ID = dcc.Store(id='Project_ID', data=Project_ID)
 
-
-print('step 2')
 
 
 app = DashProxy(transforms=[MultiplexerTransform()],
@@ -51,7 +35,7 @@ app = DashProxy(transforms=[MultiplexerTransform()],
 
 app.layout = html.Div(
     [
-        html.H1("ESPAM"),
+        html.H1("Animation Generation Tool"),
         ESPAM_content,
         WLs_Store,
         WL_Store,
@@ -60,11 +44,21 @@ app.layout = html.Div(
     ]
 )
 
+from dash import Dash, DiskcacheManager, CeleryManager, Input, Output, html, callback
 
+if 'REDIS_URL' in os.environ:
+    # Use Redis & Celery if REDIS_URL set as an env variable
+    from celery import Celery
+    celery_app = Celery(__name__, broker=os.environ['REDIS_URL'], backend=os.environ['REDIS_URL'])
+    background_callback_manager = CeleryManager(celery_app)
 
-get_ESPAM_callbacks(app)
+else:
+    # Diskcache for non-production apps when developing locally
+    import diskcache
+    cache = diskcache.Cache("./cache")
+    background_callback_manager = DiskcacheManager(cache)
 
-print('step 3')
+get_ESPAM_callbacks(app, background_callback_manager)
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8050)

@@ -1,40 +1,7 @@
-# Top level outputs
-/*.xlsx
-/*.csv
-
-
-# All temporary office docs
-~$*
-
-# All docx, PDF and pptx
-*.docx
-*.pdf
-*.pptx
-
-# QA folder
-QA/*
-
-# Access database
-*.accdb
-
-# Python specific files
 __pycache__/
 .ipynb_checkpoints/
-
-# Selenium files
-geckodriver.log
-
-# Mercurial
-
-.hg
-.hgignore
- 
-# archive files
-Archive/*
 Output/*
-
 venv/*
-
 ffmpeg-2021-07-06-git-758e2da289-full_build/*
-
 *.hds
+cache/*

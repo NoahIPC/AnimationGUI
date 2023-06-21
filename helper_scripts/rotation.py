@@ -5,7 +5,7 @@ import scipy
 import matplotlib
 import matplotlib.pyplot as plt
 
-from scipy.ndimage.interpolation import rotate
+from scipy.ndimage import rotate
 from scipy import interpolate
 
 import flopy

@@ -1,23 +1,9 @@
-from dash import dcc, html, Input, Output, State, no_update, ALL
-from dash.exceptions import PreventUpdate
 import plotly.graph_objects as go
-import dash_bootstrap_components as dbc
-from dash_extensions.enrich import dcc, html
-
-from scipy.ndimage import rotate
-
-from views.ModelAnimation import ModelAnimation
 
 import numpy as np
 import pandas as pd
-import flopy
 
-import os
 import json
-
-import dash_bootstrap_components as dbc
-import dash_html_components as html
-from dash import dcc
 
 
 
@@ -57,24 +43,22 @@ def mapPlot(WL=[], GIS_Options=None, height=930, width=1870,
             opacity = shp['opacity']
             zorder = shp['draw-order']
 
-
-                           
-
-            if geomType=='rings':
-                try:
-                    points = np.array(data['features'][0]['geometry']['rings'][1])
-                except IndexError:
-                    points = np.array(data['features'][0]['geometry']['rings'][0])
-                fig.add_trace(go.Scatter(x=points[:,0], y=points[:, 1], fill='toself', 
-                                        fillcolor=fill_color, line_color=line_color, opacity=opacity, line_width=line_width,
-                                        hoverinfo='skip', visible=visible))
-            elif geomType=='paths':
-                for feat in data['features']:
-                    for points in feat['geometry']['paths']:
-                        points = np.array(points)
-                        fig.add_trace(go.Scatter(x=points[:,0], y=points[:,1], mode='lines',
-                                                line_color=line_color, opacity=opacity, line_width=line_width,
+            for feat in data['features']:
+                geom = feat['geometry']
+                geomType = list(geom.keys())[0]
+                if geomType=='rings':
+                    for polygon in geom[geomType]:
+                        points = np.array(polygon)
+                        fig.add_trace(go.Scatter(x=points[:,0], y=points[:, 1], fill='toself', 
+                                                fillcolor=fill_color, line_color=line_color, opacity=opacity, line_width=line_width,
                                                 hoverinfo='skip', visible=visible))
+                elif geomType=='paths':
+                        for points in geom[geomType]:
+                            points = np.array(points)
+                            fig.add_trace(go.Scatter(x=points[:,0], y=points[:,1], mode='lines',
+                                                    line_color=line_color, opacity=opacity, line_width=line_width,
+                                                    hoverinfo='skip', visible=visible))
+                           
 
 
     # Remove the x and y ticks
