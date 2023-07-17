@@ -159,11 +159,11 @@ def ModelAnimation(ConfigFile):
             contf = WLAx.contourf(X, Y, Ti, np.linspace(min(ScalePoints), max(ScalePoints), 50), extend='both', cmap=cmap)
             cont = WLAx.contour(X, Y, Ti, np.linspace(min(ScalePoints), max(ScalePoints), 50), extend='both', colors='gray', linewidths=0.5)
 
-            dateText = WLAx.text(2400000, 1460000, date.strftime(DateFormat),fontsize=18,
+            dateText = WLAx.text(0.05, 0.95, date.strftime(DateFormat),fontsize=18,
                        bbox=dict(boxstyle="round",
                        fc=(1., 1, 1),
-                       ec=(0, 0, 0),
-                       ))
+                       ec=(0, 0, 0)
+                       ), transform=WLAx.transAxes,)
 
 
 

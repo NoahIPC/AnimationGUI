@@ -115,8 +115,8 @@ def make_ESPAM_layout():
         'animation-length': 'Enter the desired animation length in seconds.',
         'ESPAM_modal_open': 'Click to edit base GIS layers.',
         'ESPAM_upload': 'Upload your files here.',
-        'settings-save': 'Save the current settings.',
-        'settings-load': 'Load the saved settings.',
+        # 'settings-save': 'Save the current settings.',
+        # 'settings-load': 'Load the saved settings.',
         'generate-animation': 'Generate the animation.',
         'download-animation': 'Download the animation.',
         'figure-height': 'Adjust the height of the figure.',
@@ -194,8 +194,8 @@ def make_ESPAM_layout():
 
     # Create buttons
     ESPAM_modal_open_button = create_button(id='ESPAM_modal_open', label='Edit Base GIS Layers', disabled=True)
-    settings_save_button = dbc.Button('Download Settings', id='settings-save', disabled=True)
-    settings_load_button = dbc.Button('Load Settings', id='settings-load', disabled=True)
+    # settings_save_button = dbc.Button('Download Settings', id='settings-save', disabled=True)
+    # settings_load_button = dbc.Button('Load Settings', id='settings-load', disabled=True)
     generate_animation_button = dbc.Button('Download Animation', id='generate-animation', disabled=True)
     generate_warning_label = html.Label('', id='generate-warning-label', className="my-label")
 
@@ -216,11 +216,11 @@ def make_ESPAM_layout():
             dbc.Row([
                 figure_title_input,
                 dbc.ButtonGroup([
-                    settings_save_button,
-                    settings_load_button,
+                    # settings_save_button,
+                    # settings_load_button,
                     generate_animation_button,
-                    create_tooltip('settings-save'),
-                    create_tooltip('settings-load'),
+                    # create_tooltip('settings-save'),
+                    # create_tooltip('settings-load'),
                     create_tooltip('generate-animation'),
                     create_tooltip('download-animation'),
                     dcc.Download(id='download-animation-file'),
@@ -275,10 +275,10 @@ def make_ESPAM_layout():
                         dcc.Graph(id='ESPAM_graph', figure=mapPlot(), className='ESPAM-graph'),
                     ], width=7),
                     dbc.Col([
-                        color_input_1,
-                        color_input_2,
-                        color_input_3,
                         color_input_4,
+                        color_input_3,
+                        color_input_2,
+                        color_input_1,
                     ], width=1),
                 ]),
                 dbc.Row([

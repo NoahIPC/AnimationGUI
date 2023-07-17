@@ -138,25 +138,32 @@ def get_ESPAM_callbacks(app, background_callback_manager):
 
             print('step 1')
 
+            content_type, content_string = contents.split(',')
+            decoded = base64.b64decode(content_string)
+            
+            # now we can read the file using FloPy
+            with open('Output/WLs.dat', 'wb') as fp:
+                fp.write(decoded)
+
             if filename.endswith('.hds'):
 
+                hdobj = flopy.utils.binaryfile.HeadFile('Output/WLs.dat', precision='single')
+                
+                times = hdobj.times
 
-                content_type, content_string = contents.split(',')
-                decoded = base64.b64decode(content_string)
-                
-                # now we can read the file using FloPy
-                with open(filename, 'wb') as fp:
-                    fp.write(decoded)
-                hdobj = flopy.utils.binaryfile.HeadFile(filename, precision='single')
-                
                 WLTest = []
-                for time in hdobj.times:
+                for time in times:
                     WL = hdobj.get_data(totim=time)
                     WL = WL[0,:,:]
                     WLTest.append(WL)
 
-            WLTest = np.dstack(WLTest)
-                
+                WLTest = np.dstack(WLTest)
+
+            elif filename.endswith('.npy'):
+                WLTest = np.load('Output/WLs.dat')
+                times = np.arange(WLTest.shape[2])
+            
+                            
             np.save(f'Output/WLTest.npy', WLTest)
                 
 
@@ -180,9 +187,9 @@ def get_ESPAM_callbacks(app, background_callback_manager):
 
             WLRot = np.array(WLRot).T
 
-            WLRot = pd.DataFrame(WLRot, columns=hdobj.times)
+            WLRot = pd.DataFrame(WLRot, columns=times)
 
-            freq = hdobj.times[1]-hdobj.times[0]
+            freq = times[1]-times[0]
 
             return WLRot.to_dict('records'), freq
 
@@ -293,11 +300,12 @@ def get_ESPAM_callbacks(app, background_callback_manager):
                 if (positions[i]-positions[i+1])<120:
                     positions[i+1] += 120
 
-            # return [{'top':f'{positions[3]}px', 'position':'absolute'},
-            #         {'top':f'{positions[1]}px', 'position':'absolute'},
-            #         {'top':f'{positions[2]}px', 'position':'absolute'},
-            #         {'top':f'{positions[0]}px', 'position':'absolute'},
-            return [-np.inf, color_1_position, color_2_position, color_3_position,
+            return [
+                    # {'top':f'{positions[3]}px', 'position':'absolute'},
+                    # {'top':f'{positions[1]}px', 'position':'absolute'},
+                    # {'top':f'{positions[2]}px', 'position':'absolute'},
+                    # {'top':f'{positions[0]}px', 'position':'absolute'},
+                    -np.inf, color_1_position, color_2_position, color_3_position,
                     color_2_position, color_3_position, color_4_position, np.inf,
                     {'data':[color_1_position, color_2_position, color_3_position, color_4_position]},
                     {'data':[color_1, color_2, color_3, color_4]},
@@ -358,15 +366,13 @@ def get_ESPAM_callbacks(app, background_callback_manager):
         @app.callback(
             Input('WLs_Store', 'data'),
             Output('ESPAM_modal_open', 'disabled'),
-            Output('settings-save', 'disabled'),
-            Output('settings-load', 'disabled'),
             Output('generate-animation', 'disabled'),
             prevent_initial_call=True
         )
         def enable_buttons(WLs):
             if WLs is None:
                 raise PreventUpdate
-            return False, False, False, False
+            return False, False
 
         @app.callback(
             Input('generate-warning-label', 'children'),
